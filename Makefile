@@ -39,4 +39,4 @@ endif
 	$(MAKE) ARCH=arm EXTRA_CFLAGS="-D_ARCH_ARM_ -I$(PWD) -I$(PWD)/arch/arm -fno-pic" -C $(KDIR) M=$(PWD) modules
 
 clean:
-	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd)" | xargs rm -f
+	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod)" | xargs rm -f
