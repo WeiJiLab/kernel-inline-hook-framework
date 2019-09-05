@@ -63,20 +63,6 @@ void get_all_hijack_targets(void)
     // read_unlock(&hijack_targets_hashtable_lock);
 }
 
-bool get_hijack_target_status(void *target)
-{
-    struct sym_hook *sa = NULL;
-    uint32_t ptr_hash = jhash_pointer(target);
-    bool ret = false;
-    
-    hash_for_each_possible(all_hijack_targets, sa, node, ptr_hash) {
-        if (target == sa->target) {
-            ret = sa->status;
-        }
-    }
-    return ret;
-}
-
 int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_code_space)
 {
     struct sym_hook *sa = NULL;
