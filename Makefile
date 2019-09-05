@@ -1,15 +1,15 @@
-obj-m += secEnhance.o
+obj-m += hookFrame.o
 
-secEnhance-y += framework/module.o
-secEnhance-y += framework/hijack_operation.o
-secEnhance-y += framework/stack_safety_check.o
-secEnhance-y += framework/symbol_resolver.o
-secEnhance-y += framework/write_map_page.o
+hookFrame-y += framework/module.o
+hookFrame-y += framework/hijack_operation.o
+hookFrame-y += framework/stack_safety_check.o
+hookFrame-y += framework/symbol_resolver.o
+hookFrame-y += framework/write_map_page.o
 ifeq ($(ARCH), arm64)
-secEnhance-y += arch/arm64/hijack_arm64.o
+hookFrame-y += arch/arm64/hijack_arm64.o
 endif
 ifeq ($(ARCH), arm)
-secEnhance-y += arch/arm/hijack_arm.o
+hookFrame-y += arch/arm/hijack_arm.o
 endif
 
 PWD := $(shell pwd)
@@ -27,16 +27,16 @@ ifndef KDIR
 	@echo "Must provide KDIR!"
 	@exit 1
 endif
-	export ARCH=arm64
-	$(MAKE) ARCH=arm64 EXTRA_CFLAGS="-D_ARCH_ARM64_ -I$(PWD) -I$(PWD)/arch/arm64 -fno-pic" -C $(KDIR) M=$(PWD) modules
+	$(call compile,arm64,-D_ARCH_ARM64_)
 
 arm:
 ifndef KDIR
 	@echo "Must provide KDIR!"
 	@exit 1
 endif
-	export ARCH=arm
-	$(MAKE) ARCH=arm EXTRA_CFLAGS="-D_ARCH_ARM_ -I$(PWD) -I$(PWD)/arch/arm -fno-pic" -C $(KDIR) M=$(PWD) modules
+	$(call compile,arm,-D_ARCH_ARM_)
+
+compile = $(MAKE) ARCH=$(1) EXTRA_CFLAGS="$(2) -I$(PWD) -I$(PWD)/arch/$(1) -fno-pic" -C $(KDIR) M=$(PWD) modules
 
 clean:
 	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod)" | xargs rm -f
