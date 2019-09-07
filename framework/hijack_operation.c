@@ -2,6 +2,7 @@
 #include <linux/stop_machine.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/seq_file.h>
 #include "include/common_data.h"
 
 extern int hook_write_range(void *, void *);
@@ -50,6 +51,20 @@ bool check_function_length_enough(void *target)
     }
 }
 
+int show_all_hook_targets(struct seq_file *p, void *v)
+{
+    int bkt;
+    struct sym_hook *sa = NULL;
+    struct hlist_node *tmp;
+
+    hash_for_each_safe(all_hijack_targets, bkt, tmp, sa, node) {
+        memset(p->private, 0, MAX_KSYM_NAME_LEN);
+        sprint_symbol_no_offset((char *)(p->private), (unsigned long)(sa->target));
+        seq_printf(p, "%s %d\n", (char *)(p->private), sa->enabled);
+    }  
+    return 0;  
+}
+
 void get_all_hijack_targets(void)
 {
     int bkt;
@@ -71,7 +86,7 @@ bool get_hijack_target_status(void *target)
     
     hash_for_each_possible(all_hijack_targets, sa, node, ptr_hash) {
         if (target == sa->target) {
-            ret = sa->status;
+            ret = sa->enabled;
         }
     }
     return ret;

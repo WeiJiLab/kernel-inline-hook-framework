@@ -5,6 +5,7 @@ secEnhance-y += framework/hijack_operation.o
 secEnhance-y += framework/stack_safety_check.o
 secEnhance-y += framework/symbol_resolver.o
 secEnhance-y += framework/write_map_page.o
+secEnhance-y += framework/proc_interface.o
 ifeq ($(ARCH), arm64)
 secEnhance-y += arch/arm64/hijack_arm64.o
 endif
