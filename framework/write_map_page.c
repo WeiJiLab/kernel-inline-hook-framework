@@ -6,6 +6,7 @@
 #include <linux/vmalloc.h>
 #include <asm/pgtable.h>
 #include <asm/cacheflush.h>
+#include <asm/page.h>
 
 void *_stext_ptr = NULL, *_etext_ptr = NULL, 
     *_sinittext_ptr = NULL, *_einittext_ptr = NULL;
@@ -35,7 +36,7 @@ int remap_write_range(void *target, void *source)
     struct page *page = NULL;
     void *new_target = NULL;
 
-    if ((((unsigned long)target + HIJACK_SIZE) ^ (unsigned long)target) & (~ 0xfff)) {
+    if ((((unsigned long)target + HIJACK_SIZE) ^ (unsigned long)target) & PAGE_MASK) {
         logerror("Try to write word across page boundary %p\n", target);
         return -EFAULT;
     }
@@ -55,7 +56,7 @@ int remap_write_range(void *target, void *source)
         logerror("Remap address %p failed\n", target);
         return -EFAULT;
     } else {
-        memcpy(new_target + ((unsigned long)target & 0xfff), source, HIJACK_SIZE);
+        memcpy(new_target + ((unsigned long)target & (~ PAGE_MASK)), source, HIJACK_SIZE);
         vm_unmap_ram(new_target, 1);
         flush_icache_range((unsigned long)target, (unsigned long)target + HIJACK_SIZE);
         return 0;

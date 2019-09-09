@@ -2,6 +2,8 @@
 #include <linux/stop_machine.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/seq_file.h>
+#include <linux/rwsem.h>
 #include "include/common_data.h"
 
 extern int hook_write_range(void *, void *);
@@ -10,7 +12,7 @@ extern void fill_long_jmp(void *, void *);
 extern bool check_target_can_hijack(void *);
 
 DEFINE_HASHTABLE(all_hijack_targets, DEFAULT_HASH_BUCKET_BITS);
-// static rwlock_t hijack_targets_hashtable_lock;
+static DECLARE_RWSEM(hijack_targets_hashtable_lock);
 unsigned long (*get_symbol_pos_addr)
     (unsigned long, unsigned long *, unsigned long *) = NULL;
 
@@ -50,17 +52,20 @@ bool check_function_length_enough(void *target)
     }
 }
 
-void get_all_hijack_targets(void)
+int show_all_hook_targets(struct seq_file *p, void *v)
 {
     int bkt;
     struct sym_hook *sa = NULL;
     struct hlist_node *tmp;
 
-    // read_lock(&hijack_targets_hashtable_lock);
+    down_read(&hijack_targets_hashtable_lock);
     hash_for_each_safe(all_hijack_targets, bkt, tmp, sa, node) {
-        loginfo("list hijack targets: %p status: %s\n", sa->target, sa->enabled ? "enabled" : "disabled");
+        memset(p->private, 0, MAX_KSYM_NAME_LEN);
+        sprint_symbol_no_offset((char *)(p->private), (unsigned long)(sa->target));
+        seq_printf(p, "%s %d\n", (char *)(p->private), sa->enabled);
     }
-    // read_unlock(&hijack_targets_hashtable_lock);
+    up_read(&hijack_targets_hashtable_lock);
+    return 0;  
 }
 
 int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_code_space)
@@ -84,16 +89,16 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
     }
 
     /*third, target cannot repeat*/
-    // read_lock(&hijack_targets_hashtable_lock);
+    down_read(&hijack_targets_hashtable_lock);
     hash_for_each_possible(all_hijack_targets, sa, node, ptr_hash) {
         if (target == sa->target) {
+            up_read(&hijack_targets_hashtable_lock);
             logerror("%p has been prepared, skip...", target);
             ret = -1;
-            // read_unlock(&hijack_targets_hashtable_lock);
             goto out;
         }
     }
-    // read_unlock(&hijack_targets_hashtable_lock);
+    up_read(&hijack_targets_hashtable_lock);
 
     /*check passed, now to allocation*/
     sa = kmalloc(sizeof(*sa), GFP_KERNEL);
@@ -110,11 +115,10 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
     sa->template_return_addr = HIJACK_SIZE - sizeof(void *) + target;
     sa->enabled = false;
 
-    // write_lock(&hijack_targets_hashtable_lock);
+    down_write(&hijack_targets_hashtable_lock);
     hash_add(all_hijack_targets, &sa->node, ptr_hash);
-    // write_unlock(&hijack_targets_hashtable_lock);
+    up_write(&hijack_targets_hashtable_lock);
 
-    get_all_hijack_targets();
 out:
     return ret;
 }
@@ -131,7 +135,7 @@ int hijack_target_enable(void *target)
         .source = source_code,
     };
 
-    // write_lock(&hijack_targets_hashtable_lock);
+    down_write(&hijack_targets_hashtable_lock);
     hash_for_each_possible_safe(all_hijack_targets, sa, tmp, node, ptr_hash) {
         if (sa->target == target) {
             if (sa->enabled == false) {
@@ -152,9 +156,8 @@ int hijack_target_enable(void *target)
     }
     loginfo("%p not been prepared, skip...\n", target);
 out:
-    // write_unlock(&hijack_targets_hashtable_lock);
+    up_write(&hijack_targets_hashtable_lock);
 
-    get_all_hijack_targets();
     return ret;
 }
 
@@ -168,7 +171,7 @@ int hijack_target_disable(void *target, bool need_remove)
         .dest = target
     };    
 
-    // write_lock(&hijack_targets_hashtable_lock);
+    down_write(&hijack_targets_hashtable_lock);
     hash_for_each_possible_safe(all_hijack_targets, sa, tmp, node, ptr_hash) {
         if (sa->target == target) {
             if (sa->enabled == true) {
@@ -190,9 +193,8 @@ int hijack_target_disable(void *target, bool need_remove)
     }
     loginfo("%p not been prepared, skip...\n", target);
 out:
-    // write_unlock(&hijack_targets_hashtable_lock);
+    up_write(&hijack_targets_hashtable_lock);
 
-    get_all_hijack_targets();
     return ret;
 }
 
@@ -206,7 +208,7 @@ void hijack_target_disable_all(bool need_remove)
 
     do {
         retry = false;
-        // write_lock(&hijack_targets_hashtable_lock);
+        down_write(&hijack_targets_hashtable_lock);
         hash_for_each_safe(all_hijack_targets, bkt, tmp, sa, node) {
             if (sa->enabled == true) {
                 do_hijack_struct.dest = sa->target;
@@ -222,11 +224,10 @@ void hijack_target_disable_all(bool need_remove)
                 kfree(sa);
             }
         }
-        // write_unlock(&hijack_targets_hashtable_lock);
+        up_write(&hijack_targets_hashtable_lock);
     } while(retry && (msleep(1000), true));
 
     loginfo("all hijacked target disabled%s\n", need_remove ?" and removed":"");
-    get_all_hijack_targets();
     return;
 }
 
@@ -234,7 +235,6 @@ void hijack_target_disable_all(bool need_remove)
 
 int init_hijack_operation(void)
 {
-    // rwlock_init(&hijack_targets_hashtable_lock);
     get_symbol_pos_addr = find_func("get_symbol_pos");
     if (get_symbol_pos_addr) {
         return 0;

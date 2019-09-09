@@ -5,6 +5,7 @@ hookFrame-y += framework/hijack_operation.o
 hookFrame-y += framework/stack_safety_check.o
 hookFrame-y += framework/symbol_resolver.o
 hookFrame-y += framework/write_map_page.o
+hookFrame-y += framework/proc_interface.o
 ifeq ($(ARCH), arm64)
 hookFrame-y += arch/arm64/hijack_arm64.o
 endif
