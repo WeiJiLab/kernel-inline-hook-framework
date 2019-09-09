@@ -10,7 +10,7 @@ extern int init_hijack_operation(void);
 extern int init_write_map_page(void);
 extern int init_proc_interface(void);
 
-static int __init saic_framework_init(void)
+static int __init hook_framework_init(void)
 {
     int ret = 0;
     loginfo("load security enhencement framework!\n");
@@ -35,10 +35,10 @@ out:
     return ret;
 }
 
-static void __exit saic_framework_exit(void)
+static void __exit hook_framework_exit(void)
 {
     loginfo("unload security enhencement framework!\n");
 }
 
-module_init(saic_framework_init);
-module_exit(saic_framework_exit);
+module_init(hook_framework_init);
+module_exit(hook_framework_exit);

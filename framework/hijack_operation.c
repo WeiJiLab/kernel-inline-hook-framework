@@ -122,6 +122,7 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
 out:
     return ret;
 }
+EXPORT_SYMBOL(hijack_target_prepare);
 
 int hijack_target_enable(void *target)
 {
@@ -160,6 +161,7 @@ out:
 
     return ret;
 }
+EXPORT_SYMBOL(hijack_target_enable);
 
 int hijack_target_disable(void *target, bool need_remove)
 {
@@ -197,6 +199,7 @@ out:
 
     return ret;
 }
+EXPORT_SYMBOL(hijack_target_disable);
 
 void hijack_target_disable_all(bool need_remove)
 {
@@ -230,6 +233,7 @@ void hijack_target_disable_all(bool need_remove)
     loginfo("all hijacked target disabled%s\n", need_remove ?" and removed":"");
     return;
 }
+EXPORT_SYMBOL(hijack_target_disable_all);
 
 /************************************************************************************/
 
