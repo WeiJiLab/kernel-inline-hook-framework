@@ -4,6 +4,7 @@
 #include<linux/stacktrace.h>
 #include<linux/kernel.h>
 #include<linux/sched.h>
+#include<linux/sched/signal.h>
 #include "include/common_data.h"
 
 #define MAC_STACK_TRACE_DEPTH 64

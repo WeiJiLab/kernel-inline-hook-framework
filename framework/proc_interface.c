@@ -8,6 +8,7 @@
 #include <linux/init.h>
 #include <linux/kernel_stat.h>
 #include <linux/seq_file.h>
+#include <linux/uaccess.h>
 #include "include/common_data.h"
 
 extern int hijack_target_enable(void *);

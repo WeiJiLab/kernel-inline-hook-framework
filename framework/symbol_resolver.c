@@ -94,7 +94,7 @@ struct kernel_symbol *resolve_kallsyms_symbol(const char *name)
 	write_unlock(&ksyms_cache_hashtable_lock);
 	sym = (struct kernel_symbol *)ca;
 
-	operate_ksyms_cache(SHOW_KSYM_CACHE);
+	// operate_ksyms_cache(SHOW_KSYM_CACHE);
 out:
 	return sym;
 }

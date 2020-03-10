@@ -4,13 +4,13 @@
 
 //There MUST be 12
 /*
-    stp x1, x0, [sp, #-0x10]
+    stp x1, x0, [sp, #-0x20]
     ldr x0, 8
     br x0
     .addr(low)
     .addr(high)
 */
-const char long_jmp_code[12]="\xe1\x03\x3f\xa9\x40\x00\x00\x58\x00\x00\x1f\xd6";
+const char long_jmp_code[12]="\xe1\x03\x3e\xa9\x40\x00\x00\x58\x00\x00\x1f\xd6";
 
 inline void fill_long_jmp(void *fill_dest, void *hijack_to_func)
 {
