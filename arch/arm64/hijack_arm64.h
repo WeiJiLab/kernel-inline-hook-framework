@@ -5,7 +5,7 @@
 extern void hook_##s##_template(void);  \
 asm (  \
     "hook_"#s"_template:\n\t"  \
-    "ldp x1, x0, [sp, #-0x20]\n\t" \
+    "ldp x1, x0, [sp], #0x20\n\t" \
     "b hook_"#s"\n\t"  \
   \
     #s"_code_space:\n\t"  \
