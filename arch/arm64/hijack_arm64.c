@@ -2,20 +2,20 @@
 #include "../../include/klog.h"
 #include <asm/cacheflush.h>
 
-//There MUST be 12
 /*
     stp x1, x0, [sp, #-0x20]!
     ldr x0, 8
     br x0
     .addr(low)
     .addr(high)
+    ldp x1, x0, [sp], #0x20
 */
-const char long_jmp_code[12]="\xe1\x03\xbe\xa9\x40\x00\x00\x58\x00\x00\x1f\xd6";
+const char long_jmp_code[24]="\xe1\x03\xbe\xa9\x40\x00\x00\x58\x00\x00\x1f\xd6\x00\x00\x00\x00\x00\x00\x00\x00\xe1\x03\xc2\xa8";
 
 inline void fill_long_jmp(void *fill_dest, void *hijack_to_func)
 {
     memcpy(fill_dest, long_jmp_code, sizeof(long_jmp_code));
-    memcpy(fill_dest + sizeof(long_jmp_code), &hijack_to_func, sizeof(void *));
+    memcpy(fill_dest + 3 * INSTRUCTION_SIZE, &hijack_to_func, sizeof(void *));
 }
 
 /*

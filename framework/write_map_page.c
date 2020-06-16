@@ -7,6 +7,7 @@
 #include <asm/pgtable.h>
 #include <asm/cacheflush.h>
 #include <asm/page.h>
+#include <linux/mm.h>
 
 void *_stext_ptr = NULL, *_etext_ptr = NULL, 
     *_sinittext_ptr = NULL, *_einittext_ptr = NULL;
@@ -31,22 +32,33 @@ int core_kernel_text(unsigned long addr)
 	return 0;
 }
 
-int remap_write_range(void *target, void *source)
+/*
+* Since we are inserting jump instrcutions, if we insert in kernel area(to jump out of kernel),
+* we should use phys_to_page(__pa(target)), if we insert in kernel_module(to jump back to kernel), 
+* we should use vmalloc_to_page(target) instead
+*/
+int remap_write_range(void *target, void *source, int size, bool operate_on_kernel)
 {
     struct page *page = NULL;
     void *new_target = NULL;
 
-    if ((((unsigned long)target + HIJACK_SIZE) ^ (unsigned long)target) & PAGE_MASK) {
+    if ((((unsigned long)target + size) ^ (unsigned long)target) & PAGE_MASK) {
         logerror("Try to write word across page boundary %p\n", target);
         return -EFAULT;
     }
 
-    if (!core_kernel_text((unsigned long)target)) {
+    if (operate_on_kernel && !core_kernel_text((unsigned long)target)) {
         logerror("Try to write to non kernel address %p\n", target);
         return -EFAULT;
     }
 
-    if (!(page = phys_to_page(__pa(target)))) {
+    if (operate_on_kernel) {
+        page = phys_to_page(__pa(target));
+    } else {
+        page = vmalloc_to_page(target);
+    }
+
+    if (!page) {
         logerror("Cannot get page of address %p\n", target);
         return -EFAULT;
     }
@@ -56,19 +68,19 @@ int remap_write_range(void *target, void *source)
         logerror("Remap address %p failed\n", target);
         return -EFAULT;
     } else {
-        memcpy(new_target + ((unsigned long)target & (~ PAGE_MASK)), source, HIJACK_SIZE);
+        memcpy(new_target + ((unsigned long)target & (~ PAGE_MASK)), source, size);
         vm_unmap_ram(new_target, 1);
-        flush_icache_range((unsigned long)target, (unsigned long)target + HIJACK_SIZE);
+        flush_icache_range((unsigned long)target, (unsigned long)target + size);
         return 0;
     }
 }
 
-int hook_write_range(void *target, void *source)
+int hook_write_range(void *target, void *source, int size, bool operate_on_kernel)
 {
     long ret = 0;
  
-    if (!!(ret = probe_kernel_write(target, source, HIJACK_SIZE))) {
-        ret = remap_write_range(target, source);
+    if (!!(ret = probe_kernel_write(target, source, size))) {
+        ret = remap_write_range(target, source, size, operate_on_kernel);
     }
     return (int)ret; 
 }

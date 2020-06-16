@@ -9,11 +9,13 @@ extern int init_stack_safety_check(void);
 extern int init_hijack_operation(void);
 extern int init_write_map_page(void);
 extern int init_proc_interface(void);
+extern void remove_proc_interface(void);
+extern void hijack_target_disable_all(bool);
 
 static int __init hook_framework_init(void)
 {
     int ret = 0;
-    loginfo("load security enhencement framework!\n");
+    loginfo("load hook framework!\n");
     ret = init_write_map_page();
     if (ret) {
         goto out;
@@ -37,7 +39,9 @@ out:
 
 static void __exit hook_framework_exit(void)
 {
-    loginfo("unload security enhencement framework!\n");
+    loginfo("unload hook framework!\n");
+    hijack_target_disable_all(true);
+    remove_proc_interface();
 }
 
 module_init(hook_framework_init);

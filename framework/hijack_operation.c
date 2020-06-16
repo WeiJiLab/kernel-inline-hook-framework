@@ -6,7 +6,7 @@
 #include <linux/rwsem.h>
 #include "include/common_data.h"
 
-extern int hook_write_range(void *, void *);
+extern int hook_write_range(void *, void *, int, bool);
 extern int stack_activeness_safety_check(unsigned long);
 extern void fill_long_jmp(void *, void *);
 extern bool check_target_can_hijack(void *);
@@ -16,11 +16,13 @@ static DECLARE_RWSEM(hijack_targets_hashtable_lock);
 unsigned long (*get_symbol_pos_addr)
     (unsigned long, unsigned long *, unsigned long *) = NULL;
 
-inline void fill_hook_template_code_space(void *hook_template_code_space, 
+inline int fill_hook_template_code_space(void *hook_template_code_space, 
     void *target_code, void *return_addr)
 {
-    memcpy(hook_template_code_space, target_code, HIJACK_SIZE);
-    fill_long_jmp(hook_template_code_space + HIJACK_SIZE, return_addr);
+    unsigned char tmp_code[HIJACK_SIZE * 2] = {0};
+    memcpy(tmp_code, target_code, HIJACK_SIZE);
+    fill_long_jmp(tmp_code + HIJACK_SIZE, return_addr);
+    return hook_write_range(hook_template_code_space, tmp_code, sizeof(tmp_code), false);
 }
 
 struct do_hijack_struct {
@@ -35,7 +37,7 @@ int do_hijack_target(void *data)
     int ret = 0;
 
     if (!(ret = stack_activeness_safety_check((unsigned long)dest))) {  //no problem
-        ret = hook_write_range(dest, source);
+        ret = hook_write_range(dest, source, HIJACK_SIZE, true);
     }
     return ret;
 }
@@ -112,7 +114,14 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
     memcpy(sa->target_code, target, HIJACK_SIZE);
     sa->hook_dest = hook_dest;
     sa->hook_template_code_space = hook_template_code_space;
-    sa->template_return_addr = HIJACK_SIZE - sizeof(void *) + target;
+    sa->template_return_addr = target + HIJACK_SIZE
+#ifdef _ARCH_ARM64_
+    - 1 * INSTRUCTION_SIZE;
+#endif
+
+#ifdef _ARCH_ARM_
+    ;
+#endif
     sa->enabled = false;
 
     down_write(&hijack_targets_hashtable_lock);
@@ -140,9 +149,9 @@ int hijack_target_enable(void *target)
     hash_for_each_possible_safe(all_hijack_targets, sa, tmp, node, ptr_hash) {
         if (sa->target == target) {
             if (sa->enabled == false) {
-                if (sa->hook_template_code_space) {
-                    fill_hook_template_code_space(sa->hook_template_code_space,
-                        sa->target_code, sa->template_return_addr);
+                if (sa->hook_template_code_space && fill_hook_template_code_space(
+                    sa->hook_template_code_space, sa->target_code, sa->template_return_addr)) {
+                    goto out;
                 }
                 fill_long_jmp(source_code, sa->hook_dest);
                 if (!(ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL))) {

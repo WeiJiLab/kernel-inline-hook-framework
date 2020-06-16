@@ -88,3 +88,8 @@ int init_proc_interface(void)
         return -1;
     return 0;
 }
+
+void remove_proc_interface(void)
+{
+    remove_proc_entry("hook_targets", NULL);
+}

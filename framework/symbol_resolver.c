@@ -20,7 +20,6 @@
 
 static DEFINE_HASHTABLE(ksyms_cache_hashtable, DEFAULT_HASH_BUCKET_BITS);
 static rwlock_t ksyms_cache_hashtable_lock;
-struct mutex *module_mutex_addr = NULL;
 
 extern int hijack_target_prepare (void *, void *, void *);
 extern int hijack_target_enable(void *);
@@ -142,7 +141,7 @@ static bool check_symbol(const struct symsearch *syms,
 #endif
 
 	fsa->owner = owner;
-	fsa->crc = symversion(syms->crcs, symnum);
+	fsa->crc = (unsigned long *)symversion(syms->crcs, symnum);
 	fsa->sym = &syms->start[symnum];
 	return true;
 }
@@ -191,15 +190,13 @@ int init_symbol_resolver(void)
 	void *template = NULL;
 
 	rwlock_init(&ksyms_cache_hashtable_lock);
-	module_mutex_addr = (struct mutex *)find_func("module_mutex");
 	find_symbol_in_section_addr = (void *)find_func("find_symbol_in_section");
 
-	if (!(module_mutex_addr && 
-		find_symbol_in_section_addr)) {
+	if (!find_symbol_in_section_addr) {
 		goto out;
 	} 
 
-	template = GET_TAG_ADDERSS(find_symbol_in_section);
+	template = GET_TEMPLATE_ADDERSS(find_symbol_in_section);
 	if (hijack_target_prepare(find_symbol_in_section_addr, template, NULL)) {
 		goto out;
 	}
