@@ -14,9 +14,8 @@ hookFrame-y += arch/arm/hijack_arm.o
 endif
 
 PWD := $(shell pwd)
-  
 default:
-	@echo "make TARGET KDIR=/path/to/kernel"
+	@echo "make TARGET KDIR=/path/to/kernel CROSS_COMPILE="
 	@echo
 	@echo "Supported targets:"
 	@echo "arm64	Linux, ARM"
@@ -28,6 +27,10 @@ ifndef KDIR
 	@echo "Must provide KDIR!"
 	@exit 1
 endif
+ifndef CROSS_COMPILE
+	@echo "Must provide CROSS_COMPILE!"
+	@exit 1
+endif
 	$(call compile,arm64,-D_ARCH_ARM64_)
 
 arm:
@@ -35,9 +38,13 @@ ifndef KDIR
 	@echo "Must provide KDIR!"
 	@exit 1
 endif
+ifndef CROSS_COMPILE
+	@echo "Must provide CROSS_COMPILE!"
+	@exit 1
+endif
 	$(call compile,arm,-D_ARCH_ARM_)
 
-compile = $(MAKE) ARCH=$(1) EXTRA_CFLAGS="$(2) -I$(PWD) -I$(PWD)/arch/$(1) -fno-pic" -C $(KDIR) M=$(PWD) modules
+compile = $(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) EXTRA_CFLAGS="$(2) -I$(PWD) -I$(PWD)/arch/$(1) -fno-pic" -C $(KDIR) M=$(PWD) modules
 
 clean:
 	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod)" | xargs rm -f
