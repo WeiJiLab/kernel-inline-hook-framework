@@ -15,7 +15,7 @@ endif
 
 PWD := $(shell pwd)
 default:
-	@echo "make TARGET KDIR=/path/to/kernel CROSS_COMPILE="
+	@echo "make TARGET KDIR=/path/to/kernel CROSS_COMPILE= vermagic="
 	@echo
 	@echo "Supported targets:"
 	@echo "arm64	Linux, ARM"
@@ -31,7 +31,13 @@ ifndef CROSS_COMPILE
 	@echo "Must provide CROSS_COMPILE!"
 	@exit 1
 endif
+ifndef vermagic
 	$(call compile,arm64,-D_ARCH_ARM64_)
+else
+	@bash prevermagic.sh $(KDIR) $(vermagic)
+	$(call compile,arm64,-D_ARCH_ARM64_)
+	@bash aftvermagic.sh $(KDIR) $(vermagic) hookFrame
+endif
 
 arm:
 ifndef KDIR
@@ -42,9 +48,17 @@ ifndef CROSS_COMPILE
 	@echo "Must provide CROSS_COMPILE!"
 	@exit 1
 endif
+ifndef vermagic
 	$(call compile,arm,-D_ARCH_ARM_)
+else
+	@bash prevermagic.sh $(KDIR) $(vermagic)
+	$(call compile,arm,-D_ARCH_ARM_)
+	@bash aftvermagic.sh $(KDIR) $(vermagic) hookFrame
+endif
 
-compile = $(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) EXTRA_CFLAGS="$(2) -I$(PWD) -I$(PWD)/arch/$(1) -fno-pic" -C $(KDIR) M=$(PWD) modules
+define compile
+	$(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) EXTRA_CFLAGS="$(2) -I$(PWD) -I$(PWD)/arch/$(1) -fno-pic" -C $(KDIR) M=$(PWD) modules
+endef
 
 clean:
 	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod)" | xargs rm -f

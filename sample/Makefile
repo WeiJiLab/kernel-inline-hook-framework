@@ -7,7 +7,7 @@ hookFrameTest-y += replace_vfs_open.o
 PWD := $(shell pwd)
 
 default:
-	@echo "make TARGET KDIR=/path/to/kernel" CROSS_COMPILE=
+	@echo "make TARGET KDIR=/path/to/kernel CROSS_COMPILE= vermagic="
 	@echo
 	@echo "Supported targets:"
 	@echo "test-arm64	Linux, ARM"
@@ -23,7 +23,13 @@ ifndef CROSS_COMPILE
 	@echo "Must provide CROSS_COMPILE!"
 	@exit 1
 endif
+ifndef vermagic
 	$(call compile,arm64,-D_ARCH_ARM64_)
+else
+	@bash prevermagic.sh $(KDIR) $(vermagic)
+	$(call compile,arm64,-D_ARCH_ARM64_)
+	@bash aftvermagic.sh $(KDIR) $(vermagic) hookFrameTest
+endif
 
 test-arm32:
 ifndef KDIR
@@ -34,7 +40,13 @@ ifndef CROSS_COMPILE
 	@echo "Must provide CROSS_COMPILE!"
 	@exit 1
 endif
+ifndef vermagic
 	$(call compile,arm,-D_ARCH_ARM_)
+else
+	@bash prevermagic.sh $(KDIR) $(vermagic)
+	$(call compile,arm,-D_ARCH_ARM_)
+	@bash aftvermagic.sh $(KDIR) $(vermagic) hookFrame
+endif
 
 compile = $(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) EXTRA_CFLAGS="$(2) -I$(PWD)/include -fno-pic" -C $(KDIR) M=$(PWD) modules
 
