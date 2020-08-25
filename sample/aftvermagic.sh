@@ -13,7 +13,8 @@ if [ ! -e $3.ko ]; then
     exit 1
 fi
 
-bbe -b "/vermagic=/:/\x00/" -e "r 0 vermagic=$2\0" $3.ko > $3.ko.bak
+esp_str=`echo "${2}"|sed 's/ /\\\\x20/g'`
+bbe -b "/vermagic=/:/\x00/" -e "r 0 vermagic=$esp_str\0" $3.ko > $3.ko.bak
 mv $3.ko.bak $3.ko
 mv $UTSRELEASE.bak $UTSRELEASE
 echo "modified $3 vermagic to:$2"

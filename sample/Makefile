@@ -26,9 +26,9 @@ endif
 ifndef vermagic
 	$(call compile,arm64,-D_ARCH_ARM64_)
 else
-	@bash prevermagic.sh $(KDIR) $(vermagic)
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
 	$(call compile,arm64,-D_ARCH_ARM64_)
-	@bash aftvermagic.sh $(KDIR) $(vermagic) hookFrameTest
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrameTest
 endif
 
 test-arm32:
@@ -43,9 +43,9 @@ endif
 ifndef vermagic
 	$(call compile,arm,-D_ARCH_ARM_)
 else
-	@bash prevermagic.sh $(KDIR) $(vermagic)
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
 	$(call compile,arm,-D_ARCH_ARM_)
-	@bash aftvermagic.sh $(KDIR) $(vermagic) hookFrame
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
 endif
 
 compile = $(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) EXTRA_CFLAGS="$(2) -I$(PWD)/include -fno-pic" -C $(KDIR) M=$(PWD) modules

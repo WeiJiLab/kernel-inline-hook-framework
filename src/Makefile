@@ -34,9 +34,9 @@ endif
 ifndef vermagic
 	$(call compile,arm64,-D_ARCH_ARM64_)
 else
-	@bash prevermagic.sh $(KDIR) $(vermagic)
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
 	$(call compile,arm64,-D_ARCH_ARM64_)
-	@bash aftvermagic.sh $(KDIR) $(vermagic) hookFrame
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
 endif
 
 arm:
@@ -51,9 +51,9 @@ endif
 ifndef vermagic
 	$(call compile,arm,-D_ARCH_ARM_)
 else
-	@bash prevermagic.sh $(KDIR) $(vermagic)
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
 	$(call compile,arm,-D_ARCH_ARM_)
-	@bash aftvermagic.sh $(KDIR) $(vermagic) hookFrame
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
 endif
 
 define compile
