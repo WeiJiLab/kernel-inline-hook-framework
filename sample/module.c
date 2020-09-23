@@ -12,9 +12,6 @@
 MODULE_AUTHOR("Liu Tao <taobliu@thoughtworks.com>");
 MODULE_LICENSE("GPL");
 
-char *(*d_absolute_path_fn)(const struct path *path,
-	       char *buf, int buflen) = NULL;
-
 int (*do_dentry_open_fn)(struct file *f,
 			  struct inode *inode,
 			  int (*open)(struct inode *, struct file *)) = NULL;
@@ -27,17 +24,10 @@ static inline void *find_func(const char *name)
 	void *ret = NULL;
 	ret = (void *)kallsyms_lookup_name(name);
 	if (!ret) {
-		printk(KERN_ALERT"Symbol %s not found!", name);
+		printk(KERN_ALERT"Symbol %s not found!\n", name);
 	}
 	return ret;
 }
-
-#define GET_CODE_ADDERSS(s) \
-({  \
-    void *template; \
-    __asm__ volatile ("ldr %0, ="#s"_code_space\n\t":"=r"(template)); \
-    template;  \
-})
 
 static int __init test_hookframe_init(void)
 {
@@ -45,26 +35,26 @@ static int __init test_hookframe_init(void)
     void *vfs_read_fn;
     void *vfs_open_fn; 
 
-    d_absolute_path_fn = (char *(*)(const struct path *path,
-	       char *buf, int buflen))kallsyms_lookup_name("d_absolute_path");
-    if (!d_absolute_path_fn) {
-        printk(KERN_ALERT"d_absolute_path not found!");
-        ret = -EFAULT;
-        goto out;
-    }
-
+    /*later be used by hook_vfs_open*/
     do_dentry_open_fn = (int (*)(struct file *f,
 			  struct inode *inode,
-			  int (*open)(struct inode *, struct file *)))kallsyms_lookup_name("do_dentry_open");
-    if (!do_dentry_open_fn) {
-        printk(KERN_ALERT"do_dentry_open not found!");
-        ret = -EFAULT;
+			  int (*open)(struct inode *, struct file *)))find_func("do_dentry_open");
+
+    vfs_read_fn = (void *)find_func("vfs_read"); 
+    vfs_open_fn = (void *)find_func("vfs_open");
+
+    if (!(do_dentry_open_fn && vfs_read_fn && vfs_open_fn)) {
         goto out;
     }
 
-    vfs_read_fn = (void *)find_func("vfs_read"); 
-    vfs_open_fn = (void *)find_func("vfs_open"); 
-
+    /*
+    * template address is the trampoline where kernel function been hijacked to,
+    * codespace address is the original kernel function which been hijacked and repositioned to resume.
+    * If you want to replace the whole function, then leave the 3rd parameter of "hijack_target_prepare"
+    * to NULL.
+    * If you only want to insert your hook before or after a certain function, then leave it to be
+    * "GET_CODESPACE_ADDERSS(xx_func)"
+    */
 	if (hijack_target_prepare(vfs_read_fn, GET_TEMPLATE_ADDERSS(vfs_read), GET_CODESPACE_ADDERSS(vfs_read))) {
         printk(KERN_ALERT"vfs_read prepare error!\n");
 		goto out;
@@ -91,7 +81,7 @@ out:
 static void __exit test_hookframe_exit(void)
 {
     hijack_target_disable_all(true);
-    printk(KERN_ALERT"unload security enhencement framework!\n");
+    printk(KERN_ALERT"unload hook framework test!\n");
 }
 
 module_init(test_hookframe_init);

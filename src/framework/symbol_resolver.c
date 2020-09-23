@@ -1,5 +1,4 @@
 #include "include/common_data.h"
-#include "include/klog.h"
 #include <linux/export.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
@@ -33,7 +32,7 @@ void operate_ksyms_cache(uint32_t status)
 	if (status & SHOW_KSYM_CACHE) {
 		read_lock(&ksyms_cache_hashtable_lock);
 		hash_for_each_safe(ksyms_cache_hashtable, bkt, tmp, ca, node) {
-			loginfo("ksyms_cache: %s, %p\n", ca->ksym_name, ca->ksym_addr);
+			printk(KERN_ALERT"ksyms_cache: %s, %p\n", ca->ksym_name, ca->ksym_addr);
 		}
 		read_unlock(&ksyms_cache_hashtable_lock);
 	}
@@ -73,7 +72,7 @@ struct kernel_symbol *resolve_kallsyms_symbol(const char *name)
     
     ca = (struct ksym_cache *)kzalloc(sizeof(struct ksym_cache), GFP_ATOMIC);
     if (!ca) {
-		loginfo("No memory cache allocated for %s\n", name);
+		printk(KERN_ALERT"No memory cache allocated for %s\n", name);
         goto out;
 	}
 

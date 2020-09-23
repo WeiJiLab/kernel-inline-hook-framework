@@ -1,4 +1,3 @@
-#include "include/klog.h"
 #include "include/common_data.h"
 #include <linux/uaccess.h>
 #include <linux/kernel.h>
@@ -43,12 +42,12 @@ int remap_write_range(void *target, void *source, int size, bool operate_on_kern
     void *new_target = NULL;
 
     if ((((unsigned long)target + size) ^ (unsigned long)target) & PAGE_MASK) {
-        logerror("Try to write word across page boundary %p\n", target);
+        printk(KERN_ALERT"Try to write word across page boundary %p\n", target);
         return -EFAULT;
     }
 
     if (operate_on_kernel && !core_kernel_text((unsigned long)target)) {
-        logerror("Try to write to non kernel address %p\n", target);
+        printk(KERN_ALERT"Try to write to non kernel address %p\n", target);
         return -EFAULT;
     }
 
@@ -59,13 +58,13 @@ int remap_write_range(void *target, void *source, int size, bool operate_on_kern
     }
 
     if (!page) {
-        logerror("Cannot get page of address %p\n", target);
+        printk(KERN_ALERT"Cannot get page of address %p\n", target);
         return -EFAULT;
     }
 
     new_target = vm_map_ram(&page, 1, -1, PAGE_KERNEL_EXEC);
     if (!new_target) {
-        logerror("Remap address %p failed\n", target);
+        printk(KERN_ALERT"Remap address %p failed\n", target);
         return -EFAULT;
     } else {
         memcpy(new_target + ((unsigned long)target & (~ PAGE_MASK)), source, size);

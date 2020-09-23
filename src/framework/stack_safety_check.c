@@ -38,7 +38,7 @@ int stack_activeness_safety_check(unsigned long addr)
         (*save_stack_trace_tsk_ptr)(t, &trace);
         if (trace.nr_entries >= trace.max_entries) {
             ret = -16; //EBUSY
-            logerror("More than %d max trace entries!\n", trace.max_entries);
+            printk(KERN_ALERT"More than %d max trace entries!\n", trace.max_entries);
             goto out;
         }
 
@@ -53,22 +53,20 @@ int stack_activeness_safety_check(unsigned long addr)
 
 out:
     if (ret) {
-        logerror("PID: %d Comm: %.20s\n", t->pid, t->comm);
+        printk(KERN_ALERT"PID: %d Comm: %.20s\n", t->pid, t->comm);
         for (i = 0; i < trace.nr_entries; i++) {
             if (trace.entries[i] == ULONG_MAX)
                 break;
-            logerror("  [<%pK>] %pB\n", (void *)trace.entries[i], (void *)trace.entries[i]);
+            printk(KERN_ALERT"  [<%pK>] %pB\n", (void *)trace.entries[i], (void *)trace.entries[i]);
         }
     }
     return ret;
 }
 
-int init_stack_safety_check(void)
+void init_stack_safety_check(void)
 {
     save_stack_trace_tsk_ptr = find_func("save_stack_trace_tsk");
-    if (save_stack_trace_tsk_ptr) {
-        return 0;
-    } else {
-        return -14;
+    if (!save_stack_trace_tsk_ptr) {
+        printk(KERN_ALERT"CONFIG_STACKTRACE may not be enabled, skip stack safety check and use as your risk!!!\n");
     }
 }

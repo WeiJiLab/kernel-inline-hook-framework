@@ -4,12 +4,15 @@
 #include <linux/delay.h>
 #include <linux/seq_file.h>
 #include <linux/rwsem.h>
+#include <linux/stacktrace.h>
 #include "include/common_data.h"
 
 extern int hook_write_range(void *, void *, int, bool);
 extern int stack_activeness_safety_check(unsigned long);
 extern void fill_long_jmp(void *, void *);
 extern bool check_target_can_hijack(void *);
+extern void (*save_stack_trace_tsk_ptr)(struct task_struct *,
+    struct stack_trace *);
 
 DEFINE_HASHTABLE(all_hijack_targets, DEFAULT_HASH_BUCKET_BITS);
 static DECLARE_RWSEM(hijack_targets_hashtable_lock);
@@ -35,6 +38,11 @@ int do_hijack_target(void *data)
     void *dest = ((struct do_hijack_struct *)data)->dest;
     void *source = ((struct do_hijack_struct *)data)->source;
     int ret = 0;
+
+    /*if CONFIG_STACKTRACE not enabled, skip stack safety check*/
+    if (!save_stack_trace_tsk_ptr) {
+        return hook_write_range(dest, source, HIJACK_SIZE, true);
+    }
 
     if (!(ret = stack_activeness_safety_check((unsigned long)dest))) {  //no problem
         ret = hook_write_range(dest, source, HIJACK_SIZE, true);
@@ -78,14 +86,14 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
 
     /*first, target function should longer than HIJACK_SIZE*/
     if (!check_function_length_enough(target)) {
-        logerror("%p short than hijack_size %d, cannot hijack...", target, HIJACK_SIZE);
+        printk(KERN_ALERT"%p short than hijack_size %d, cannot hijack...\n", target, HIJACK_SIZE);
         ret = -1;
         goto out;
     }
 
     /*second, not contain unhookable instructions*/
     if (hook_template_code_space && !check_target_can_hijack(target)) {
-        logerror("%p contains instruction which cannot hijack...", target);
+        printk(KERN_ALERT"%p contains instruction which cannot hijack...\n", target);
         ret = -1;
         goto out;
     }
@@ -95,7 +103,7 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
     hash_for_each_possible(all_hijack_targets, sa, node, ptr_hash) {
         if (target == sa->target) {
             up_read(&hijack_targets_hashtable_lock);
-            logerror("%p has been prepared, skip...", target);
+            printk(KERN_ALERT"%p has been prepared, skip...\n", target);
             ret = -1;
             goto out;
         }
@@ -105,7 +113,7 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
     /*check passed, now to allocation*/
     sa = kmalloc(sizeof(*sa), GFP_KERNEL);
     if (!sa) {
-        logerror("No enough memory to hijack %p\n", target);
+        printk(KERN_ALERT"No enough memory to hijack %p\n", target);
         ret = -1;
         goto out;
     }
@@ -158,13 +166,13 @@ int hijack_target_enable(void *target)
                     sa->enabled = true;
                 }
             } else {
-                loginfo("%p has been hijacked, skip...\n", sa->target);
+                printk(KERN_ALERT"%p has been hijacked, skip...\n", sa->target);
                 ret = 0;
             }
             goto out;
         }
     }
-    loginfo("%p not been prepared, skip...\n", target);
+    printk(KERN_ALERT"%p not been prepared, skip...\n", target);
 out:
     up_write(&hijack_targets_hashtable_lock);
 
@@ -190,19 +198,19 @@ int hijack_target_disable(void *target, bool need_remove)
                 if (!(ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL)))
                     sa->enabled = false;
             } else {
-                loginfo("%p has been disabled\n", sa->target);
+                printk(KERN_ALERT"%p has been disabled\n", sa->target);
                 ret = 0;
             }
 
             if (need_remove && !ret) {
-                loginfo("remove hijack target %p\n", target);
+                printk(KERN_ALERT"remove hijack target %p\n", target);
                 hash_del(&sa->node);
                 kfree(sa);
             }
             goto out;
         }
     }
-    loginfo("%p not been prepared, skip...\n", target);
+    printk(KERN_ALERT"%p not been prepared, skip...\n", target);
 out:
     up_write(&hijack_targets_hashtable_lock);
 
@@ -239,7 +247,7 @@ void hijack_target_disable_all(bool need_remove)
         up_write(&hijack_targets_hashtable_lock);
     } while(retry && (msleep(1000), true));
 
-    loginfo("all hijacked target disabled%s\n", need_remove ?" and removed":"");
+    printk(KERN_ALERT"all hijacked target disabled%s\n", need_remove ?" and removed":"");
     return;
 }
 EXPORT_SYMBOL(hijack_target_disable_all);

@@ -14,7 +14,7 @@
 extern int hijack_target_enable(void *);
 extern int hijack_target_disable(void *, bool);
 
-static ssize_t hook_targets_write(struct file *file, const char *buf, size_t count, loff_t *offp)
+static ssize_t hook_targets_write(struct file *file, const char __user *buf, size_t count, loff_t *offp)
 {
     char *string_start, *sep, *val_start;
     long val;

@@ -4,7 +4,7 @@
 #include <linux/hashtable.h>
 #include <linux/jhash.h>
 #include <linux/kallsyms.h>
-#include "include/klog.h"
+#include <linux/types.h>
 
 #ifdef _ARCH_ARM64_
 #include "hijack_arm64.h"
@@ -50,7 +50,7 @@ static inline void *find_func(const char *name)
 	void *ret = NULL;
 	ret = (void *)kallsyms_lookup_name(name);
 	if (!ret) {
-		logerror("Symbol %s not found!", name);
+		printk(KERN_ALERT"Symbol %s not found!\n", name);
 	}
 	return ret;
 }

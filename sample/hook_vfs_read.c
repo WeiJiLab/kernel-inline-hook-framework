@@ -6,9 +6,6 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 
-extern char *(*d_absolute_path_fn)(const struct path *path,
-	       char *buf, int buflen);
-
 HOOK_FUNC_TEMPLATE(vfs_read);
 ssize_t hook_vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
 {

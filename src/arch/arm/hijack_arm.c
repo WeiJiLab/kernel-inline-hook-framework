@@ -1,5 +1,4 @@
 #include "hijack_arm.h"
-#include "../../include/klog.h"
 #include <asm/cacheflush.h>
 
 //There MUST be 4
@@ -75,7 +74,7 @@ bool check_instruction_can_hijack(uint32_t instruction)
 
 out:
     if (!ret) {
-        logerror("instruction %x cannot be hijacked!\n", instruction);
+        printk(KERN_ALERT"instruction %x cannot be hijacked!\n", instruction);
     }
     return ret;
 }
