@@ -20,7 +20,7 @@ There will be 2 kernel modules:
 
 2) sample/: The customized hook/replacement functions. Write your code here, and you can take hook_vfs_read.c, replace_vfs_open.c as reference when writing your own function. Also in module.c, you can  get a general view of how to register your function to hook framework. After compile, hookFrameTest.ko will be generated.
 
-Sometimes you will find the vermagic of hookFrame.ko and hookFrameTest.ko different from your running kernel. You can pass the running kernel's vermagic string to make:
+Sometimes you will find the vermagic of hookFrame.ko and hookFrameTest.ko different from your target kernel. You can pass the target kernel's vermagic string to make:
 
 ```
 # For example:
@@ -43,7 +43,7 @@ If you find "find_symbol_in_section 1" in hook_targets, don't worry, that means 
 ## Limits ##
 The hook framework currently support arm32 and arm64, mainly tested on linux 4.14.98, should working on 4.x and 3.x, but 5.x has not been tested.
 
-In addition, in order to make hook framework work properly, kernel configuration CONFIG_KALLSYMS, CONFIG_STACKTRACE should be enabled.
+In addition, in order to make hook framework work properly, target kernel's configuration CONFIG_KALLSYMS is a must, CONFIG_STACKTRACE is optional, but highly recommented for stability.
 
 ## Bugs ##
 Please report any bugs to me: liutgnu@gmail.com, also any contributions are welcomed.
