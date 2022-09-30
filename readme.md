@@ -1,5 +1,11 @@
 # Overview #
 
+## News
+
+1) support kernel version to 5.19
+
+2) x86_64 support
+
 ## Introduction ##
 
 Usually we want to hack a kernel function, 
@@ -38,12 +44,13 @@ $ echo "vfs_read 0" > /proc/hook_targets # disable vfs_read hooking
 $ echo "vfs_read 1" > /proc/hook_targets # enable vfs_read hooking
 ```
 
-If you find "find_symbol_in_section 1" in hook_targets, don't worry, that means you can directly use all kernel symbols found by kallsyms_lookup_name, not limited to those EXPORT_SYMBOL symbols. If it's useless to you, simply turn it off.
-
 ## Limits ##
-The hook framework currently support arm32 and arm64, mainly tested on linux 4.14.98, should working on 4.x and 3.x, but 5.x has not been tested.
+Now I bump the kernel support version to 5.19, tested in fedora36. It will not backward support the older 4.14 kernels. If you are still interested in the old kernel support, please checkout the old code from git log.
 
-In addition, in order to make hook framework work properly, target kernel's configuration CONFIG_KALLSYMS is a must, CONFIG_STACKTRACE is optional, but highly recommented for stability.
+Currently it support arm32, arm64 and x86_64. I don't plan to support x86.
+[Distorm](https://github.com/gdabah/distorm) is integrated for x86_64 support, the credit goes to the original authors.
+
+In addition, in order to make hook framework work properly, target kernel's configuration CONFIG_KALLSYMS and CONFIG_KPROBES is a must.
 
 ## Bugs ##
 Please report any bugs to me: liutgnu@gmail.com, also any contributions are welcomed.
