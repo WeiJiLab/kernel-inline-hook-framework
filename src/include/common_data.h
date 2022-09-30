@@ -3,15 +3,21 @@
 
 #include <linux/hashtable.h>
 #include <linux/jhash.h>
-#include <linux/kallsyms.h>
 #include <linux/types.h>
 
 #ifdef _ARCH_ARM64_
 #include "hijack_arm64.h"
+#include <asm/memory.h>
 #endif
 
 #ifdef _ARCH_ARM_
 #include "hijack_arm.h"
+#include <asm/memory.h>
+#endif
+
+#ifdef _ARCH_X86_64_
+#include "hijack_x86_64.h"
+#include <asm/page.h>
 #endif
 
 #define DEFAULT_HASH_BUCKET_BITS   17
@@ -45,15 +51,7 @@ struct sym_hook {
     unsigned char target_code[HIJACK_SIZE];
 };
 
-static inline void *find_func(const char *name)
-{
-	void *ret = NULL;
-	ret = (void *)kallsyms_lookup_name(name);
-	if (!ret) {
-		printk(KERN_ALERT"Symbol %s not found!\n", name);
-	}
-	return ret;
-}
+void *find_func(const char *name);
 
 #define SHOW_KSYM_CACHE 1
 #define CLEAN_ALL_KSYM_CACHE (1 << 1)

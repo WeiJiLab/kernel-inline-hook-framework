@@ -1,6 +1,9 @@
 #ifndef CONFIG_STACKTRACE
 #define CONFIG_STACKTRACE
 #endif
+#ifdef CONFIG_ARCH_STACKWALK
+#undef CONFIG_ARCH_STACKWALK
+#endif
 #include<linux/stacktrace.h>
 #include<linux/kernel.h>
 #include<linux/sched.h>
@@ -67,6 +70,6 @@ void init_stack_safety_check(void)
 {
     save_stack_trace_tsk_ptr = find_func("save_stack_trace_tsk");
     if (!save_stack_trace_tsk_ptr) {
-        printk(KERN_ALERT"CONFIG_STACKTRACE may not be enabled, skip stack safety check and use as your risk!!!\n");
+        printk(KERN_ALERT"Your kernel should be \"CONFIG_STACKTRACE && !CONFIG_ARCH_STACKWALK\", skip stack safety check and use as your risk!!!\n");
     }
 }

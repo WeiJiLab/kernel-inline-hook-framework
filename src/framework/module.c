@@ -14,6 +14,10 @@ extern void hijack_target_disable_all(bool);
 static int __init hook_framework_init(void)
 {
     int ret = 0;
+    ret = init_symbol_resolver();
+    if (ret) {
+        goto out;
+    }  
     ret = init_write_map_page();
     if (ret) {
         goto out;
@@ -24,10 +28,6 @@ static int __init hook_framework_init(void)
         goto out;
     }
     ret = init_proc_interface();
-    if (ret) {
-        goto out;
-    }
-    ret = init_symbol_resolver();
     if (ret) {
         goto out;
     }

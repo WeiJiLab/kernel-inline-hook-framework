@@ -12,6 +12,17 @@ endif
 ifeq ($(ARCH), arm)
 hookFrame-y += arch/arm/hijack_arm.o
 endif
+ifeq ($(ARCH), x86_64)
+hookFrame-y += arch/x86_64/distorm/decoder.o
+hookFrame-y += arch/x86_64/distorm/distorm.o
+hookFrame-y += arch/x86_64/distorm/instructions.o
+hookFrame-y += arch/x86_64/distorm/insts.o
+hookFrame-y += arch/x86_64/distorm/mnemonics.o
+hookFrame-y += arch/x86_64/distorm/operands.o
+hookFrame-y += arch/x86_64/distorm/prefix.o
+hookFrame-y += arch/x86_64/distorm/textdefs.o
+hookFrame-y += arch/x86_64/hijack_x86_64.o
+endif
 
 PWD := $(shell pwd)
 default:
@@ -20,6 +31,7 @@ default:
 	@echo "Supported targets:"
 	@echo "arm64	Linux, ARM"
 	@echo "arm	Linux, ARM"
+	@echo "x86_64	Linux, X86_64"
 	@echo
 
 arm64:
@@ -53,6 +65,19 @@ ifndef vermagic
 else
 	@bash prevermagic.sh $(KDIR) "$(vermagic)"
 	$(call compile,arm,-D_ARCH_ARM_)
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
+endif
+
+x86_64:
+ifndef KDIR
+	@echo "Must provide KDIR!"
+	@exit 1
+endif
+ifndef vermagic
+	$(call compile,x86_64,-D_ARCH_X86_64_)
+else
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
+	$(call compile,x86_64,-D_ARCH_X86_64_)
 	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
 endif
 

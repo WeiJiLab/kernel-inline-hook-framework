@@ -37,7 +37,7 @@ static ssize_t hook_targets_write(struct file *file, const char __user *buf, siz
         return -EFAULT;
     }
 
-    if (!(target = (void *)kallsyms_lookup_name(string_start))) {
+    if (!(target = find_func(string_start))) {
         return -EFAULT;
     }
 
@@ -74,17 +74,17 @@ static int hook_targets_release(struct inode *inode, struct file *file)
     return single_release(inode, file);
 }
 
-static const struct file_operations proc_operations = {
-	.open		= hook_targets_open,
-	.read		= seq_read,
-	.llseek		= seq_lseek,
-	.release	= hook_targets_release,
-	.write 		= hook_targets_write,
+static struct proc_ops proc_ops = {
+	.proc_open		= hook_targets_open,
+	.proc_read		= seq_read,
+	.proc_lseek		= seq_lseek,
+	.proc_release		= hook_targets_release,
+	.proc_write 		= hook_targets_write,
 };
 
 int init_proc_interface(void)
 {
-    if (!proc_create("hook_targets", 0600, NULL, &proc_operations))
+    if (!proc_create("hook_targets", 0600, NULL, &proc_ops))
         return -1;
     return 0;
 }

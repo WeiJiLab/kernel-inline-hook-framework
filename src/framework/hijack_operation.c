@@ -5,6 +5,7 @@
 #include <linux/seq_file.h>
 #include <linux/rwsem.h>
 #include <linux/stacktrace.h>
+#include <linux/kallsyms.h>
 #include "include/common_data.h"
 
 extern int hook_write_range(void *, void *, int, bool);
@@ -24,6 +25,9 @@ inline int fill_hook_template_code_space(void *hook_template_code_space,
 {
     unsigned char tmp_code[HIJACK_SIZE * 2] = {0};
     memcpy(tmp_code, target_code, HIJACK_SIZE);
+    if (fill_nop_for_code_space(tmp_code, target_code)) {
+        return -1;
+    }
     fill_long_jmp(tmp_code + HIJACK_SIZE, return_addr);
     return hook_write_range(hook_template_code_space, tmp_code, sizeof(tmp_code), false);
 }
@@ -122,13 +126,17 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
     memcpy(sa->target_code, target, HIJACK_SIZE);
     sa->hook_dest = hook_dest;
     sa->hook_template_code_space = hook_template_code_space;
-    sa->template_return_addr = target + HIJACK_SIZE
+    sa->template_return_addr = target
 #ifdef _ARCH_ARM64_
-    - 1 * INSTRUCTION_SIZE;
+    + HIJACK_SIZE - 1 * INSTRUCTION_SIZE;
 #endif
 
 #ifdef _ARCH_ARM_
-    ;
+    + HIJACK_SIZE;
+#endif
+
+#ifdef _ARCH_X86_64_
+    + LONG_JMP_CODE_LEN - 1;
 #endif
     sa->enabled = false;
 
@@ -161,7 +169,10 @@ int hijack_target_enable(void *target)
                     sa->hook_template_code_space, sa->target_code, sa->template_return_addr)) {
                     goto out;
                 }
+                memcpy(source_code, sa->target_code, HIJACK_SIZE);
                 fill_long_jmp(source_code, sa->hook_dest);
+                if ((ret = fill_nop_for_target(source_code, sa->target)))
+                    goto out;
                 if (!(ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL))) {
                     sa->enabled = true;
                 }

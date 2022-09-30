@@ -9,4 +9,8 @@
 #include "hijack_arm.h"
 #endif
 
+#ifdef _ARCH_X86_64_
+#include "hijack_x86_64.h"
+#endif
+
 #endif

@@ -43,4 +43,7 @@ asm (  \
 #define INSTRUCTION_SIZE 4
 #define HIJACK_INST_NUM 6
 #define HIJACK_SIZE (INSTRUCTION_SIZE * HIJACK_INST_NUM)
+#define fill_nop_for_target(x, y) (0)
+#define fill_nop_for_code_space(x, y) (0)
+int init_arch_write_map_page(void);
 #endif

@@ -18,16 +18,7 @@ int (*do_dentry_open_fn)(struct file *f,
 
 extern ssize_t hook_vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos);
 extern int hook_vfs_open(const struct path *path, struct file *file);
-
-static inline void *find_func(const char *name)
-{
-	void *ret = NULL;
-	ret = (void *)kallsyms_lookup_name(name);
-	if (!ret) {
-		printk(KERN_ALERT"Symbol %s not found!\n", name);
-	}
-	return ret;
-}
+extern void *find_func(const char *name);
 
 static int __init test_hookframe_init(void)
 {

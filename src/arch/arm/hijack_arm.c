@@ -88,3 +88,21 @@ bool check_target_can_hijack(void *target)
     }
     return true;
 }
+
+void (*__patch_text_real_ptr)(void *, unsigned int, bool) = NULL;
+void *find_func(const char *name);
+
+int hook_write_range(void *target, void *source, int size, bool operate_on_kernel)
+{
+    for (int i = 0; i < size; i = i + INSTRUCTION_SIZE) {
+        __patch_text_real_ptr(target + i, *(unsigned int *)(source + i), true);
+    }
+
+    return 0;
+}
+
+int init_arch_write_map_page(void)
+{
+    __patch_text_real_ptr = (void *)find_func("__patch_text_real");
+    return !__patch_text_real_ptr;
+}

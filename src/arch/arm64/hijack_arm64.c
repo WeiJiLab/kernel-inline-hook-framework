@@ -81,3 +81,27 @@ bool check_target_can_hijack(void *target)
     }
     return true;
 }
+
+int (*aarch64_insn_write_ptr)(void *, u32) = NULL;
+void *find_func(const char *name);
+
+int hook_write_range(void *target, void *source, int size, bool operate_on_kernel)
+{
+    long ret = 0;
+ 
+    for (int i = 0; i < size; i = i + INSTRUCTION_SIZE) {
+        ret = aarch64_insn_write_ptr(target + i, *(u32 *)(source + i));
+        if (ret) {
+            goto out;
+        }
+    }
+
+out:
+    return (int)ret; 
+}
+
+int init_arch_write_map_page(void)
+{
+    aarch64_insn_write_ptr = (void *)find_func("aarch64_insn_write");
+    return !aarch64_insn_write_ptr;
+}

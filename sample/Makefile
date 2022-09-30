@@ -5,16 +5,17 @@ hookFrameTest-y += hook_vfs_read.o
 hookFrameTest-y += replace_vfs_open.o
 
 PWD := $(shell pwd)
+KBUILD_EXTRA_SYMBOLS = $(PWD)/../src/Module.symvers
 
 default:
 	@echo "make TARGET KDIR=/path/to/kernel CROSS_COMPILE= vermagic="
 	@echo
 	@echo "Supported targets:"
-	@echo "test-arm64	Linux, ARM"
-	@echo "test-arm32	Linux, ARM"
-	@echo
+	@echo "arm64	Linux, ARM"
+	@echo "arm32	Linux, ARM"
+	@echo "x86_64	Linux, X86_64"
 
-test-arm64:
+arm64:
 ifndef KDIR
 	@echo "Must provide KDIR!"
 	@exit 1
@@ -31,7 +32,7 @@ else
 	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrameTest
 endif
 
-test-arm32:
+arm:
 ifndef KDIR
 	@echo "Must provide KDIR!"
 	@exit 1
@@ -45,10 +46,23 @@ ifndef vermagic
 else
 	@bash prevermagic.sh $(KDIR) "$(vermagic)"
 	$(call compile,arm,-D_ARCH_ARM_)
-	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrameTest
 endif
 
-compile = $(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) EXTRA_CFLAGS="$(2) -I$(PWD)/include -fno-pic" -C $(KDIR) M=$(PWD) modules
+x86_64:
+ifndef KDIR
+	@echo "Must provide KDIR!"
+	@exit 1
+endif
+ifndef vermagic
+	$(call compile,x86_64,-D_ARCH_X86_64_)
+else
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
+	$(call compile,x86_64,-D_ARCH_X86_64_)
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrameTest
+endif
+
+compile = $(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS) EXTRA_CFLAGS="$(2) -I$(PWD)/include -fno-pic" -C $(KDIR) M=$(PWD) modules
 
 clean:
 	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod)" | xargs rm -f

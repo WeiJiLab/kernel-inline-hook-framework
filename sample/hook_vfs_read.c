@@ -22,7 +22,9 @@ ssize_t hook_vfs_read(struct file *file, char __user *buf, size_t count, loff_t 
     if (!IS_ERR(result)) {
         if (!strnstr(result, "/dev/kmsg", 512 - (result - path_buffer)) && 
         !strnstr(result, "[timerfd]", 512 - (result - path_buffer)) &&
-        !strnstr(result, "/proc/kmsg", 512 - (result - path_buffer))
+        !strnstr(result, "/proc/kmsg", 512 - (result - path_buffer)) &&
+        !strnstr(result, "/run/log", 512 - (result - path_buffer)) &&
+        !strnstr(result, "/var/log", 512 - (result - path_buffer))
         )
             printk(KERN_ALERT"reading %s\n", result);
     }
