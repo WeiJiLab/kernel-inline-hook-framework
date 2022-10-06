@@ -6,22 +6,16 @@ hookFrame-y += framework/stack_safety_check.o
 hookFrame-y += framework/symbol_resolver.o
 hookFrame-y += framework/write_map_page.o
 hookFrame-y += framework/proc_interface.o
-ifeq ($(ARCH), arm64)
-hookFrame-y += arch/arm64/hijack_arm64.o
-endif
-ifeq ($(ARCH), arm)
-hookFrame-y += arch/arm/hijack_arm.o
-endif
-ifeq ($(ARCH), x86_64)
-hookFrame-y += arch/x86_64/distorm/decoder.o
-hookFrame-y += arch/x86_64/distorm/distorm.o
-hookFrame-y += arch/x86_64/distorm/instructions.o
-hookFrame-y += arch/x86_64/distorm/insts.o
-hookFrame-y += arch/x86_64/distorm/mnemonics.o
-hookFrame-y += arch/x86_64/distorm/operands.o
-hookFrame-y += arch/x86_64/distorm/prefix.o
-hookFrame-y += arch/x86_64/distorm/textdefs.o
-hookFrame-y += arch/x86_64/hijack_x86_64.o
+hookFrame-y += arch/$(ARCH)/hijack_$(ARCH).o
+ifneq ($(findstring $(ARCH),"x86_64 x86"),)
+hookFrame-y += arch/$(ARCH)/distorm/decoder.o
+hookFrame-y += arch/$(ARCH)/distorm/distorm.o
+hookFrame-y += arch/$(ARCH)/distorm/instructions.o
+hookFrame-y += arch/$(ARCH)/distorm/insts.o
+hookFrame-y += arch/$(ARCH)/distorm/mnemonics.o
+hookFrame-y += arch/$(ARCH)/distorm/operands.o
+hookFrame-y += arch/$(ARCH)/distorm/prefix.o
+hookFrame-y += arch/$(ARCH)/distorm/textdefs.o
 endif
 
 PWD := $(shell pwd)
@@ -32,7 +26,7 @@ default:
 	@echo "arm64	Linux, ARM"
 	@echo "arm	Linux, ARM"
 	@echo "x86_64	Linux, X86_64"
-	@echo
+	@echo "x86	Linux, X86"
 
 arm64:
 ifndef KDIR
@@ -78,6 +72,19 @@ ifndef vermagic
 else
 	@bash prevermagic.sh $(KDIR) "$(vermagic)"
 	$(call compile,x86_64,-D_ARCH_X86_64_)
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
+endif
+
+x86:
+ifndef KDIR
+	@echo "Must provide KDIR!"
+	@exit 1
+endif
+ifndef vermagic
+	$(call compile,x86,-D_ARCH_X86_)
+else
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
+	$(call compile,x86,-D_ARCH_X86_)
 	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
 endif
 

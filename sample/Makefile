@@ -14,6 +14,7 @@ default:
 	@echo "arm64	Linux, ARM"
 	@echo "arm32	Linux, ARM"
 	@echo "x86_64	Linux, X86_64"
+	@echo "x86	Linux, X86"
 
 arm64:
 ifndef KDIR
@@ -59,6 +60,19 @@ ifndef vermagic
 else
 	@bash prevermagic.sh $(KDIR) "$(vermagic)"
 	$(call compile,x86_64,-D_ARCH_X86_64_)
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrameTest
+endif
+
+x86:
+ifndef KDIR
+	@echo "Must provide KDIR!"
+	@exit 1
+endif
+ifndef vermagic
+	$(call compile,x86,-D_ARCH_X86_)
+else
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
+	$(call compile,x86,-D_ARCH_X86_)
 	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrameTest
 endif
 

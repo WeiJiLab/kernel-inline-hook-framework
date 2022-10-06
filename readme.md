@@ -4,7 +4,7 @@
 
 1) support kernel version to 5.19
 
-2) x86_64 support
+2) x86_64/x86 support
 
 ## Introduction ##
 
@@ -47,8 +47,7 @@ $ echo "vfs_read 1" > /proc/hook_targets # enable vfs_read hooking
 ## Limits ##
 Now I bump the kernel support version to 5.19, tested in fedora36. It will not backward support the older 4.14 kernels. If you are still interested in the old kernel support, please checkout the old code from git log.
 
-Currently it support arm32, arm64 and x86_64. I don't plan to support x86.
-[Distorm](https://github.com/gdabah/distorm) is integrated for x86_64 support, the credit goes to the original authors.
+Currently it support arm32, arm64, x86 and x86_64. [Distorm](https://github.com/gdabah/distorm) is integrated for x86_64 support, the credit goes to the original authors.
 
 In addition, in order to make hook framework work properly, target kernel's configuration CONFIG_KALLSYMS and CONFIG_KPROBES is a must.
 

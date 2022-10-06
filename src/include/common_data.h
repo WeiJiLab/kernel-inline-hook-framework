@@ -20,6 +20,11 @@
 #include <asm/page.h>
 #endif
 
+#ifdef _ARCH_X86_
+#include "hijack_x86.h"
+#include <asm/page.h>
+#endif
+
 #define DEFAULT_HASH_BUCKET_BITS   17
 #define MAX_KSYM_NAME_LEN 64
 

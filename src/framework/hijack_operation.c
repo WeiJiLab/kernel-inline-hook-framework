@@ -135,7 +135,7 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
     + HIJACK_SIZE;
 #endif
 
-#ifdef _ARCH_X86_64_
+#if defined(_ARCH_X86_64_) || defined(_ARCH_X86_)
     + LONG_JMP_CODE_LEN - 1;
 #endif
     sa->enabled = false;

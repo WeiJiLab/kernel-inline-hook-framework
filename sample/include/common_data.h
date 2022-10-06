@@ -13,4 +13,8 @@
 #include "hijack_x86_64.h"
 #endif
 
+#ifdef _ARCH_X86_
+#include "hijack_x86.h"
+#endif
+
 #endif
