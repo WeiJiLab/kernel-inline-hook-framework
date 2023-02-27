@@ -14,7 +14,7 @@ extern int (*do_dentry_open_fn)(struct file *f,
 HOOK_FUNC_TEMPLATE(vfs_open);
 int hook_vfs_open(const struct path *path, struct file *file)
 {
-    printk(KERN_ALERT"in replaced vfs_open\n");
+	printk(KERN_ALERT"in replaced vfs_open\n");
 	file->f_path = *path;
 	return (*do_dentry_open_fn)(file, d_backing_inode(path->dentry), NULL);
 }

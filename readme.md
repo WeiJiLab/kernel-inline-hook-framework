@@ -2,9 +2,9 @@
 
 ## News
 
-1) support kernel version to 5.19
+1) x86_64/x86 kernel module hook support.
 
-2) x86_64/x86 support
+   Thanks to 李钟鸣 <948054294@qq.com> for the bug report and code suggestions.
 
 ## Introduction ##
 

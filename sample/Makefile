@@ -2,6 +2,7 @@ obj-m += hookFrameTest.o
 
 hookFrameTest-y += module.o
 hookFrameTest-y += hook_vfs_read.o
+hookFrameTest-y += hook_fuse_open.o
 hookFrameTest-y += replace_vfs_open.o
 
 PWD := $(shell pwd)

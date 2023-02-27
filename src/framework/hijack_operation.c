@@ -17,8 +17,8 @@ extern void (*save_stack_trace_tsk_ptr)(struct task_struct *,
 
 DEFINE_HASHTABLE(all_hijack_targets, DEFAULT_HASH_BUCKET_BITS);
 static DECLARE_RWSEM(hijack_targets_hashtable_lock);
-unsigned long (*get_symbol_pos_addr)
-    (unsigned long, unsigned long *, unsigned long *) = NULL;
+int (*kallsyms_lookup_size_offset_ptr)(unsigned long,
+    unsigned long *, unsigned long *) = NULL;
 
 inline int fill_hook_template_code_space(void *hook_template_code_space, 
     void *target_code, void *return_addr)
@@ -58,7 +58,7 @@ bool check_function_length_enough(void *target)
 {
     unsigned long symbolsize, offset;
     unsigned long pos;
-    pos = (*get_symbol_pos_addr)((unsigned long)target, &symbolsize, &offset);
+    pos = (*kallsyms_lookup_size_offset_ptr)((unsigned long)target, &symbolsize, &offset);
     if (pos && !offset && symbolsize >= HIJACK_SIZE) {
         return true;
     } else {
@@ -267,8 +267,8 @@ EXPORT_SYMBOL(hijack_target_disable_all);
 
 int init_hijack_operation(void)
 {
-    get_symbol_pos_addr = find_func("get_symbol_pos");
-    if (get_symbol_pos_addr) {
+    kallsyms_lookup_size_offset_ptr = find_func("kallsyms_lookup_size_offset");
+    if (kallsyms_lookup_size_offset_ptr) {
         return 0;
     } else {
         return -14;

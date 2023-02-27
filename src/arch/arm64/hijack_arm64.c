@@ -85,11 +85,11 @@ bool check_target_can_hijack(void *target)
 int (*aarch64_insn_write_ptr)(void *, u32) = NULL;
 void *find_func(const char *name);
 
-int hook_write_range(void *target, void *source, int size, bool operate_on_kernel)
+int hook_write_range(void *target, void *source, int size)
 {
-    long ret = 0;
+    int ret = 0, i;
  
-    for (int i = 0; i < size; i = i + INSTRUCTION_SIZE) {
+    for (i = 0; i < size; i = i + INSTRUCTION_SIZE) {
         ret = aarch64_insn_write_ptr(target + i, *(u32 *)(source + i));
         if (ret) {
             goto out;
@@ -97,7 +97,7 @@ int hook_write_range(void *target, void *source, int size, bool operate_on_kerne
     }
 
 out:
-    return (int)ret; 
+    return ret; 
 }
 
 int init_arch_write_map_page(void)

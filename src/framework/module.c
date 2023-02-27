@@ -1,6 +1,6 @@
 #include <linux/module.h>
 
-MODULE_AUTHOR("Liu Tao <taobliu@thoughtworks.com>");
+MODULE_AUTHOR("Liu Tao <ltao@redhat.com>");
 MODULE_LICENSE("GPL");
 
 extern int init_symbol_resolver(void);

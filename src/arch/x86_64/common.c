@@ -9,6 +9,9 @@
 #include <linux/mm.h>
 #include "include/common_data.h"
 
+extern int (*core_kernel_text_ptr)(unsigned long);
+extern bool (*is_module_text_address_ptr)(unsigned long);
+
 _DecodedInst decodedInstructions[MAX_INSTRUCTIONS];
 
 int disass_target(void *target)
@@ -72,7 +75,7 @@ bool check_target_can_hijack(void *target)
 * we should use phys_to_page(__pa(target)), if we insert in kernel_module(to jump back to kernel), 
 * we should use vmalloc_to_page(target) instead
 */
-int remap_write_range(void *target, void *source, int size, bool operate_on_kernel)
+int remap_write_range(void *target, void *source, int size)
 {
     struct page *page = NULL;
     void *new_target = NULL;
@@ -82,15 +85,13 @@ int remap_write_range(void *target, void *source, int size, bool operate_on_kern
         return -EFAULT;
     }
 
-    if (operate_on_kernel && !core_kernel_text((unsigned long)target)) {
-        printk(KERN_ALERT"Try to write to non kernel address %p\n", target);
-        return -EFAULT;
-    }
-
-    if (operate_on_kernel) {
+    if (core_kernel_text_ptr((unsigned long)target)) {
 	page = virt_to_page(target);
-    } else {
+    } else if (is_module_text_address_ptr((unsigned long)target)) {
         page = vmalloc_to_page(target);
+    } else {
+        printk(KERN_ALERT"Try to write to non kernel text address %p\n", target);
+        return -EFAULT;	    
     }
 
     if (!page) {
@@ -110,8 +111,8 @@ int remap_write_range(void *target, void *source, int size, bool operate_on_kern
     }
 }
 
-int hook_write_range(void *target, void *source, int size, bool operate_on_kernel)
+int hook_write_range(void *target, void *source, int size)
 {
-    long ret = remap_write_range(target, source, size, operate_on_kernel);
+    long ret = remap_write_range(target, source, size);
     return (int)ret; 
 }
