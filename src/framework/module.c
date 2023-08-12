@@ -3,7 +3,8 @@
 MODULE_AUTHOR("Liu Tao <ltao@redhat.com>");
 MODULE_LICENSE("GPL");
 
-extern int init_symbol_resolver(void);
+extern int init_kallsyms_lookup_func(void);
+extern int init_simplify_symbols_hook(void);
 extern void init_stack_safety_check(void);
 extern int init_hijack_operation(void);
 extern int init_write_map_page(void);
@@ -14,7 +15,7 @@ extern void hijack_target_disable_all(bool);
 static int __init hook_framework_init(void)
 {
     int ret = 0;
-    ret = init_symbol_resolver();
+    ret = init_kallsyms_lookup_func();
     if (ret) {
         goto out;
     }  
@@ -31,8 +32,15 @@ static int __init hook_framework_init(void)
     if (ret) {
         goto out;
     }
+    ret = init_simplify_symbols_hook();
+    if (ret) {
+        goto clean_proc;
+    }
     printk(KERN_ALERT"load hook framework success!\n");
     return ret;
+
+clean_proc:
+    remove_proc_interface();
 out:
     printk(KERN_ALERT"load hook framework fail!\n");
     return ret;

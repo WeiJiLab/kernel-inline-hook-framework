@@ -74,12 +74,12 @@ int show_all_hook_targets(struct seq_file *p, void *v)
 
     down_read(&hijack_targets_hashtable_lock);
     hash_for_each_safe(all_hijack_targets, bkt, tmp, sa, node) {
-        memset(p->private, 0, MAX_KSYM_NAME_LEN);
+        memset(p->private, 0, KSYM_NAME_LEN);
         sprint_symbol_no_offset((char *)(p->private), (unsigned long)(sa->target));
         seq_printf(p, "%s %d\n", (char *)(p->private), sa->enabled);
     }
     up_read(&hijack_targets_hashtable_lock);
-    return 0;  
+    return 0;
 }
 
 int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_code_space)

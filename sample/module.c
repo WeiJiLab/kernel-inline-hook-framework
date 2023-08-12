@@ -12,10 +12,6 @@
 MODULE_AUTHOR("Liu Tao <ltao@redhat.com>");
 MODULE_LICENSE("GPL");
 
-int (*do_dentry_open_fn)(struct file *f,
-			  struct inode *inode,
-			  int (*open)(struct inode *, struct file *)) = NULL;
-
 extern void *find_func(const char *name);
 
 static int __init test_hookframe_init(void)
@@ -25,16 +21,11 @@ static int __init test_hookframe_init(void)
 	void *vfs_open_fn;
 	void *fuse_open_common_fn;
 
-	/*later be used by hook_vfs_open*/
-	do_dentry_open_fn = (int (*)(struct file *f,
-		struct inode *inode,
-		int (*open)(struct inode *, struct file *)))find_func("do_dentry_open");
-
 	vfs_read_fn = (void *)find_func("vfs_read"); 
 	vfs_open_fn = (void *)find_func("vfs_open");
 	fuse_open_common_fn = (void *)find_func("fuse_open_common");
 
-	if (!(do_dentry_open_fn && vfs_read_fn &&
+	if (!(vfs_read_fn &&
 		vfs_open_fn && fuse_open_common_fn)) {
 		goto out;
 	}

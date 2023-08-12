@@ -7,7 +7,7 @@
 
 extern struct inode *d_backing_inode(const struct dentry *upper);
 
-extern int (*do_dentry_open_fn)(struct file *f,
+extern int do_dentry_open(struct file *f,
 			  struct inode *inode,
 			  int (*open)(struct inode *, struct file *));
 
@@ -16,5 +16,5 @@ int hook_vfs_open(const struct path *path, struct file *file)
 {
 	printk(KERN_ALERT"in replaced vfs_open\n");
 	file->f_path = *path;
-	return (*do_dentry_open_fn)(file, d_backing_inode(path->dentry), NULL);
+	return do_dentry_open(file, d_backing_inode(path->dentry), NULL);
 }

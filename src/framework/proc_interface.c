@@ -22,13 +22,13 @@ static ssize_t hook_targets_write(struct file *file, const char __user *buf, siz
     int ret;
     char *buffer = ((struct seq_file *)file->private_data)->private;
 
-    memset(buffer, 0, MAX_KSYM_NAME_LEN);
+    memset(buffer, 0, KSYM_NAME_LEN);
     if (copy_from_user(buffer, buf, 
-        count > MAX_KSYM_NAME_LEN ? MAX_KSYM_NAME_LEN : count)) {
+        count > KSYM_NAME_LEN ? KSYM_NAME_LEN : count)) {
         return -EFAULT;
     }
     string_start = strim(buffer);
-    if (!(sep = strnchr(string_start, MAX_KSYM_NAME_LEN, ' '))) {
+    if (!(sep = strnchr(string_start, KSYM_NAME_LEN, ' '))) {
         return -EFAULT;
     }
     *sep++ = '\0';
@@ -59,11 +59,11 @@ extern int show_all_hook_targets(struct seq_file *, void *);
 
 static int hook_targets_open(struct inode *inode, struct file *file)
 {
-    void *buffer = kzalloc(MAX_KSYM_NAME_LEN, GFP_KERNEL);
+    void *buffer = kzalloc(KSYM_NAME_LEN, GFP_KERNEL);
     if (!buffer) {
         return -ENOMEM;
     }
-	return single_open(file, show_all_hook_targets, buffer);
+    return single_open(file, show_all_hook_targets, buffer);
 }
 
 static int hook_targets_release(struct inode *inode, struct file *file)

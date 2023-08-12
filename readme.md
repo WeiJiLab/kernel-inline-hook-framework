@@ -2,9 +2,7 @@
 
 ## News
 
-1) x86_64/x86 kernel module hook support.
-
-   Thanks to 李钟鸣 <948054294@qq.com> for the bug report and code suggestions.
+1) hookFrameTest module can use kallsyms symbols, not limited to EXPORT_SYMBOL symbols.(See usecase section)
 
 ## Introduction ##
 
@@ -44,8 +42,105 @@ $ echo "vfs_read 0" > /proc/hook_targets # disable vfs_read hooking
 $ echo "vfs_read 1" > /proc/hook_targets # enable vfs_read hooking
 ```
 
+## Usecase ##
+This hook framework can help kernel developers to modify a specific function on
+live(a simplified livepatch ^_^), so we can insert our customized code to it as a
+quick experiment. This is extremely useful when we don't want to spend a few hours
+of new kernel source compiling.
+
+E.g, a quick way to change:
+
+```
+int target_function(const struct path *path, struct file *file)
+{
+	file->f_path = *path;
+	return dependent_func_1(file, dependent_func_2(path->dentry), NULL);
+}
+```
+
+into:
+
+```
+int target_function(const struct path *path, struct file *file)
+{
+	printk(KERN_ALERT"%lx %lx", (unsigned long)path, (unsigned long)file);
+	file->f_path = *path;
+	return dependent_func_1(file, dependent_func_2(path->dentry), NULL);
+}
+```
+
+However using the hook framework is not as easy, it can be frustrating to identify
+and copy a lot of function dependencies. E.g, in order to make new target_function
+work in the hook framework, it may look like this, assuming dependent_func_1 and
+dependent_func_2 are not exported by EXPORT_SYMBOL() and friends, and can be found
+in "/proc/kallsyms":
+
+```
+struct inode *(*dependent_func_2_ptr)
+	(const struct dentry *upper) = find_func("dependent_func_2");
+
+int (*dependent_func_1_ptr)(
+	struct file *f,
+	struct inode *inode,
+	int (*open)(struct inode *, struct file *)) = find_func("dependent_func_1");
+
+HOOK_FUNC_TEMPLATE(target_function);
+int hook_target_function(const struct path *path, struct file *file)
+{
+	printk(KERN_ALERT"%lx %lx", (unsigned long)path, (unsigned long)file);
+	file->f_path = *path;
+	return dependent_func_1_ptr(file, dependent_func_2_ptr(path->dentry), NULL);
+}
+```
+
+In order to make hook_target_function work, all dependent functions need to be
+changed and imported. If target_function have more dependent funcions, the recursive
+work can be tough and boring. To make the work easier, we now can use it this way,
+target_function is left unchanged, and less dependent functions will be copied into:
+
+```
+extern struct inode *dependent_func_2(const struct dentry *upper);
+
+extern int dependent_func_1(
+	struct file *f,
+	struct inode *inode,
+	int (*open)(struct inode *, struct file *));
+
+HOOK_FUNC_TEMPLATE(target_function);
+int hook_target_function(const struct path *path, struct file *file)
+{
+	printk(KERN_ALERT"%lx %lx", (unsigned long)path, (unsigned long)file);
+	file->f_path = *path;
+	return dependent_func_1(file, dependent_func_2(path->dentry), NULL);
+}
+```
+
+That's because the symbol resolve function is hacked(see src/framework/
+symbol_resolver.c). Previously only the EXPORT_SYMBOL symbols can be resolved in
+kernel modules, now all kallsyms symbols can be resolved. You can use kallsyms
+symbols just like EXPORT_SYMBOL symbols in hookFrameTest ko.
+
 ## Limits ##
-Now I bump the kernel support version to 5.19, tested in fedora36. It will not backward support the older 4.14 kernels. If you are still interested in the old kernel support, please checkout the old code from git log.
+I have tested the code in fedora38(arm64 and x86_64). Since there is no redhat
+option in 32bit, so 32bit is not tested. In addition, please check if there is
+"simplify_symbols" in /proc/kallsyms. If yes, then the code can be built and
+run directly. If no, please apply the following change then built:
+
+```
+diff --git a/src/Makefile b/src/Makefile
+index 7bbfe26..9ee06d7 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -3,7 +3,7 @@ obj-m += hookFrame.o
+ hookFrame-y += framework/module.o
+ hookFrame-y += framework/hijack_operation.o
+ hookFrame-y += framework/stack_safety_check.o
+-hookFrame-y += framework/symbol_resolver.o
++hookFrame-y += framework/symbol_resolver_bak.o
+ hookFrame-y += framework/write_map_page.o
+ hookFrame-y += framework/proc_interface.o
+ hookFrame-y += arch/$(ARCH)/hijack_$(ARCH).o
+```
 
 Currently it support arm32, arm64, x86 and x86_64. [Distorm](https://github.com/gdabah/distorm) is integrated for x86_64 support, the credit goes to the original authors.
 
