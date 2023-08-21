@@ -6,6 +6,7 @@
 #include <linux/hashtable.h>
 #include <linux/rcupdate.h>
 #include <linux/version.h>
+#include <linux/slab.h>
 
 enum mod_license {
 	NOT_GPL_ONLY,
