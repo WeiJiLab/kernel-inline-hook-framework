@@ -147,6 +147,7 @@ Currently it support arm32, arm64, x86 and x86_64. [Distorm](https://github.com/
 In addition, in order to make hook framework work properly, target kernel's configuration CONFIG_KALLSYMS and CONFIG_KPROBES is a must.
 
 ## Bugs ##
-Please report any bugs to me: liutgnu@gmail.com, also any contributions are welcomed.
+Please report any bugs to me: liutgnu@gmail.com, also any contributions are welcomed. Happy hacking!!!
 
-## Happy Hacking !!! ##
+## Demo ##
+![demo](demo.gif)
