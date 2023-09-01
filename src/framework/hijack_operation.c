@@ -19,6 +19,7 @@ DEFINE_HASHTABLE(all_hijack_targets, DEFAULT_HASH_BUCKET_BITS);
 static DECLARE_RWSEM(hijack_targets_hashtable_lock);
 int (*kallsyms_lookup_size_offset_ptr)(unsigned long,
     unsigned long *, unsigned long *) = NULL;
+static char name_buf[KSYM_NAME_LEN];
 
 inline int fill_hook_template_code_space(void *hook_template_code_space, 
     void *target_code, void *return_addr)
@@ -204,17 +205,18 @@ int hijack_target_disable(void *target, bool need_remove)
     down_write(&hijack_targets_hashtable_lock);
     hash_for_each_possible_safe(all_hijack_targets, sa, tmp, node, ptr_hash) {
         if (sa->target == target) {
+            sprint_symbol_no_offset(name_buf, (unsigned long)(sa->target));
             if (sa->enabled == true) {
                 do_hijack_struct.source = sa->target_code;
                 if (!(ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL)))
                     sa->enabled = false;
             } else {
-                printk(KERN_ALERT"%p has been disabled\n", sa->target);
+                printk(KERN_ALERT"%s has been disabled\n", name_buf);
                 ret = 0;
             }
 
             if (need_remove && !ret) {
-                printk(KERN_ALERT"remove hijack target %p\n", target);
+                printk(KERN_ALERT"remove hijack target %s\n", name_buf);
                 hash_del(&sa->node);
                 kfree(sa);
             }

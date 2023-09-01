@@ -14,12 +14,13 @@ MODULE_LICENSE("GPL");
 
 extern void *find_func(const char *name);
 
+static void *vfs_read_fn;
+static void *vfs_open_fn;
+static void *fuse_open_common_fn;
+
 static int __init test_hookframe_init(void)
 {
 	int ret = -EFAULT;
-	void *vfs_read_fn;
-	void *vfs_open_fn;
-	void *fuse_open_common_fn;
 
 	vfs_read_fn = (void *)find_func("vfs_read"); 
 	vfs_open_fn = (void *)find_func("vfs_open");
@@ -67,16 +68,20 @@ static int __init test_hookframe_init(void)
 	return 0;
 
 out:
-	hijack_target_disable_all(true);
+	hijack_target_disable(vfs_read_fn, true);
+	hijack_target_disable(vfs_open_fn, true);
 	if (!fuse_open_common_fn) {
 		printk(KERN_ALERT"Maybe forget to \"modprobe fuse\"?\n");
 	}
+	hijack_target_disable(fuse_open_common_fn, true);
 	return ret;
 }
 
 static void __exit test_hookframe_exit(void)
 {
-	hijack_target_disable_all(true);
+	hijack_target_disable(vfs_read_fn, true);
+	hijack_target_disable(vfs_open_fn, true);
+	hijack_target_disable(fuse_open_common_fn, true);
 	printk(KERN_ALERT"unload hook framework test!\n");
 }
 
