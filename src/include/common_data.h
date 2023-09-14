@@ -26,6 +26,11 @@
 #include <asm/page.h>
 #endif
 
+#ifdef _ARCH_POWERPC_
+#include "hijack_powerpc.h"
+#include <asm/page.h>
+#endif
+
 #define DEFAULT_HASH_BUCKET_BITS   17
 
 #define jhash_pointer(pointer)       jhash((&pointer), sizeof(pointer), 0x95279527)

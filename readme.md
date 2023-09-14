@@ -2,7 +2,7 @@
 
 ## News
 
-1) hookFrameTest module can use kallsyms symbols, not limited to EXPORT_SYMBOL symbols.(See usecase section)
+1) PowerPC(ppc64le) hook support
 
 ## Introduction ##
 

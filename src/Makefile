@@ -28,14 +28,11 @@ default:
 	@echo "arm	Linux, ARM"
 	@echo "x86_64	Linux, X86_64"
 	@echo "x86	Linux, X86"
+	@echo "powerpc	Linux, PPC64LE"
 
 arm64:
 ifndef KDIR
 	@echo "Must provide KDIR!"
-	@exit 1
-endif
-ifndef CROSS_COMPILE
-	@echo "Must provide CROSS_COMPILE!"
 	@exit 1
 endif
 ifndef vermagic
@@ -49,10 +46,6 @@ endif
 arm:
 ifndef KDIR
 	@echo "Must provide KDIR!"
-	@exit 1
-endif
-ifndef CROSS_COMPILE
-	@echo "Must provide CROSS_COMPILE!"
 	@exit 1
 endif
 ifndef vermagic
@@ -86,6 +79,19 @@ ifndef vermagic
 else
 	@bash prevermagic.sh $(KDIR) "$(vermagic)"
 	$(call compile,x86,-D_ARCH_X86_)
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
+endif
+
+powerpc:
+ifndef KDIR
+	@echo "Must provide KDIR!"
+	@exit 1
+endif
+ifndef vermagic
+	$(call compile,powerpc,-D_ARCH_POWERPC_)
+else
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
+	$(call compile,powerpc,-D_ARCH_POWERPC_)
 	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
 endif
 

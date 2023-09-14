@@ -39,6 +39,12 @@ static int __init test_hookframe_init(void)
 	* If you only want to insert your hook before or after a certain function, then leave it to be
 	* "GET_CODESPACE_ADDERSS(xx_func)"
 	*/
+
+	/*
+	  For powerpc, function resume is not supported, currently only function
+	  replacement is supported.
+	*/
+#ifndef _ARCH_POWERPC_
 	if (hijack_target_prepare(vfs_read_fn, GET_TEMPLATE_ADDERSS(vfs_read), GET_CODESPACE_ADDERSS(vfs_read))) {
 		printk(KERN_ALERT"vfs_read prepare error!\n");
 		goto out;
@@ -47,7 +53,7 @@ static int __init test_hookframe_init(void)
 		printk(KERN_ALERT"vfs_read enable error!\n");
 		goto out;
 	}
-
+#endif
 	if (hijack_target_prepare(vfs_open_fn, GET_TEMPLATE_ADDERSS(vfs_open), NULL)) {
 		printk(KERN_ALERT"vfs_open prepare error!\n");
 		goto out;
@@ -57,6 +63,7 @@ static int __init test_hookframe_init(void)
 		goto out;
 	}
 
+#ifndef _ARCH_POWERPC_
 	if (hijack_target_prepare(fuse_open_common_fn, GET_TEMPLATE_ADDERSS(fuse_open_common), GET_CODESPACE_ADDERSS(fuse_open_common))) {
 		printk(KERN_ALERT"fuse_open_common prepare error!\n");
 		goto out;
@@ -65,6 +72,7 @@ static int __init test_hookframe_init(void)
 		printk(KERN_ALERT"fuse_open_common enable error!\n");
 		goto out;
 	}
+#endif
 	return 0;
 
 out:

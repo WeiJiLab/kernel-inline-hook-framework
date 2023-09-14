@@ -17,4 +17,8 @@
 #include "hijack_x86.h"
 #endif
 
+#ifdef _ARCH_POWERPC_
+#include "hijack_powerpc.h"
+#endif
+
 #endif

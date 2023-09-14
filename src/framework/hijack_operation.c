@@ -60,7 +60,7 @@ bool check_function_length_enough(void *target)
     unsigned long symbolsize, offset;
     unsigned long pos;
     pos = (*kallsyms_lookup_size_offset_ptr)((unsigned long)target, &symbolsize, &offset);
-    if (pos && !offset && symbolsize >= HIJACK_SIZE) {
+    if (pos && symbolsize >= HIJACK_SIZE + offset) {
         return true;
     } else {
         return false;
@@ -86,8 +86,11 @@ int show_all_hook_targets(struct seq_file *p, void *v)
 int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_code_space)
 {
     struct sym_hook *sa = NULL;
-    uint32_t ptr_hash = jhash_pointer(target);
+    uint32_t ptr_hash;
     int ret = 0;
+
+    target += HOOK_TARGET_OFFSET;
+    ptr_hash = jhash_pointer(target);
 
     /*first, target function should longer than HIJACK_SIZE*/
     if (!check_function_length_enough(target)) {
@@ -98,6 +101,7 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
 
     /*second, not contain unhookable instructions*/
     if (hook_template_code_space && !check_target_can_hijack(target)) {
+	hook_template_code_space += CODE_SPACE_OFFSET;
         printk(KERN_ALERT"%p contains instruction which cannot hijack...\n", target);
         ret = -1;
         goto out;
@@ -139,6 +143,10 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
 #if defined(_ARCH_X86_64_) || defined(_ARCH_X86_)
     + LONG_JMP_CODE_LEN - 1;
 #endif
+
+#ifdef _ARCH_POWERPC_
+    + HIJACK_SIZE;
+#endif
     sa->enabled = false;
 
     down_write(&hijack_targets_hashtable_lock);
@@ -154,10 +162,14 @@ int hijack_target_enable(void *target)
 {
     struct sym_hook *sa;
     struct hlist_node *tmp;
-    uint32_t ptr_hash = jhash_pointer(target);
+    uint32_t ptr_hash;
     int ret = -1;
     unsigned char source_code[HIJACK_SIZE] = {0};
-    struct do_hijack_struct do_hijack_struct = {
+    struct do_hijack_struct do_hijack_struct;
+    
+    target += HOOK_TARGET_OFFSET;
+    ptr_hash = jhash_pointer(target);
+    do_hijack_struct = (struct do_hijack_struct ) {
         .dest = target,
         .source = source_code,
     };
@@ -196,9 +208,13 @@ int hijack_target_disable(void *target, bool need_remove)
 {
     struct sym_hook *sa;
     struct hlist_node *tmp;
-    uint32_t ptr_hash = jhash_pointer(target);
+    uint32_t ptr_hash;
     int ret = -1;
-    struct do_hijack_struct do_hijack_struct = {
+    struct do_hijack_struct do_hijack_struct;
+    
+    target += HOOK_TARGET_OFFSET;
+    ptr_hash = jhash_pointer(target);    
+    do_hijack_struct = (struct do_hijack_struct) {
         .dest = target
     };    
 

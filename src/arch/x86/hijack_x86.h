@@ -41,5 +41,7 @@ asm (  \
 int fill_nop_for_target(void *, void *);
 int fill_nop_for_code_space(void *, void *);
 #define init_arch_write_map_page(x) (0)
+#define HOOK_TARGET_OFFSET (0)
+#define CODE_SPACE_OFFSET (0)
 #define MAX_INSTRUCTIONS 10
 #endif

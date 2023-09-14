@@ -239,7 +239,7 @@ int init_kallsyms_lookup_func(void)
 		printk(KERN_ALERT"register_kprobe failed!\n");
 		goto out;
 	}
-	kallsyms_lookup_name_ptr = (unsigned long (*)(const char *))(kp.addr);
+	kallsyms_lookup_name_ptr = (void *)(kp.addr) - HOOK_TARGET_OFFSET;
 	unregister_kprobe(&kp);
 	ret = 0;
 out:
