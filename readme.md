@@ -142,7 +142,7 @@ index 7bbfe26..9ee06d7 100644
  hookFrame-y += arch/$(ARCH)/hijack_$(ARCH).o
 ```
 
-Currently it support arm32, arm64, x86 and x86_64. [Distorm](https://github.com/gdabah/distorm) is integrated for x86_64 support, the credit goes to the original authors.
+Currently it support arm32, arm64, x86 and x86_64.
 
 In addition, in order to make hook framework work properly, target kernel's configuration CONFIG_KALLSYMS and CONFIG_KPROBES is a must.
 

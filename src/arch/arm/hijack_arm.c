@@ -102,7 +102,7 @@ int hook_write_range(void *target, void *source, int size)
     return 0;
 }
 
-int init_arch_write_map_page(void)
+int init_arch(void)
 {
     __patch_text_real_ptr = (void *)find_func("__patch_text_real");
     return !__patch_text_real_ptr;

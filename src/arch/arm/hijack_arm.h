@@ -38,5 +38,5 @@ asm (  \
 #define fill_nop_for_code_space(x, y) (0)
 #define HOOK_TARGET_OFFSET (0)
 #define CODE_SPACE_OFFSET (0)
-int init_arch_write_map_page(void);
+int init_arch(void);
 #endif

@@ -100,7 +100,7 @@ out:
     return ret; 
 }
 
-int init_arch_write_map_page(void)
+int init_arch(void)
 {
     aarch64_insn_write_ptr = (void *)find_func("aarch64_insn_write");
     return !aarch64_insn_write_ptr;

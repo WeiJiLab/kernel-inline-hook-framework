@@ -64,7 +64,7 @@ out:
     return ret; 
 }
 
-int init_arch_write_map_page(void)
+int init_arch(void)
 {
 	patch_instruction_ptr = (void *)find_func("patch_instruction");
 	return !patch_instruction_ptr;

@@ -124,14 +124,4 @@ asm (						\
 #define INSTRUCTION_SIZE 4
 #define HIJACK_INST_NUM 7
 #define HIJACK_SIZE (INSTRUCTION_SIZE * HIJACK_INST_NUM)
-#define fill_nop_for_target(x, y) (0)
-#define fill_nop_for_code_space(x, y) (0)
-/*
-  3 instrucions are saved for saving r2 and r0, we fill long jump start
-  from an offset. see hijack_powerpc.c
-*/ 
-#define HOOK_TARGET_OFFSET (INSTRUCTION_SIZE * 3)
-// The real code filling area is 4 instrucions offset of #s"_code_space
-#define CODE_SPACE_OFFSET (INSTRUCTION_SIZE * 4)
-int init_arch_write_map_page(void);
 #endif

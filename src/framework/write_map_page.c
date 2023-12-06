@@ -29,7 +29,7 @@ int init_write_map_page(void)
     	  core_kernel_text_ptr && is_module_text_address_ptr)) {
         goto out;
     }
-    if (init_arch_write_map_page())
+    if (init_arch())
 	goto out;
     ret = 0;
 out:

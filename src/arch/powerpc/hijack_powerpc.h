@@ -133,5 +133,5 @@ asm (						\
 #define HOOK_TARGET_OFFSET (INSTRUCTION_SIZE * 3)
 // The real code filling area is 4 instrucions offset of #s"_code_space
 #define CODE_SPACE_OFFSET (INSTRUCTION_SIZE * 4)
-int init_arch_write_map_page(void);
+int init_arch(void);
 #endif

@@ -9,14 +9,6 @@ hookFrame-y += framework/proc_interface.o
 hookFrame-y += arch/$(ARCH)/hijack_$(ARCH).o
 ifneq ($(findstring $(ARCH),"x86_64 x86"),)
 hookFrame-y += arch/$(ARCH)/common.o
-hookFrame-y += arch/$(ARCH)/distorm/decoder.o
-hookFrame-y += arch/$(ARCH)/distorm/distorm.o
-hookFrame-y += arch/$(ARCH)/distorm/instructions.o
-hookFrame-y += arch/$(ARCH)/distorm/insts.o
-hookFrame-y += arch/$(ARCH)/distorm/mnemonics.o
-hookFrame-y += arch/$(ARCH)/distorm/operands.o
-hookFrame-y += arch/$(ARCH)/distorm/prefix.o
-hookFrame-y += arch/$(ARCH)/distorm/textdefs.o
 endif
 
 PWD := $(shell pwd)
