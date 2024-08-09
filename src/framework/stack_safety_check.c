@@ -36,7 +36,7 @@ int stack_activeness_safety_check(unsigned long addr)
     struct task_struct *g, *t;
     int ret = 0;
     int i;
-    do_each_thread(g, t) {
+    for_each_process_thread(g, t) {
         trace.nr_entries = 0;
         (*save_stack_trace_tsk_ptr)(t, &trace);
         if (trace.nr_entries >= trace.max_entries) {
@@ -52,7 +52,7 @@ int stack_activeness_safety_check(unsigned long addr)
             if (ret)
                 goto out;
         }
-    } while_each_thread(g, t);
+    }
 
 out:
     if (ret) {

@@ -4,17 +4,26 @@
 #include <linux/fs.h>
 #include <linux/printk.h>
 #include <linux/dcache.h>
-
-extern struct inode *d_backing_inode(const struct dentry *upper);
+#include <linux/fsnotify.h>
 
 extern int do_dentry_open(struct file *f,
-			  struct inode *inode,
 			  int (*open)(struct inode *, struct file *));
 
 HOOK_FUNC_TEMPLATE(vfs_open);
 int hook_vfs_open(const struct path *path, struct file *file)
 {
+	int ret;
+
 	printk(KERN_ALERT"in replaced vfs_open\n");
 	file->f_path = *path;
-	return do_dentry_open(file, d_backing_inode(path->dentry), NULL);
+	ret = do_dentry_open(file, NULL);
+	if (!ret) {
+		/*
+		 * Once we return a file with FMODE_OPENED, __fput() will call
+		 * fsnotify_close(), so we need fsnotify_open() here for
+		 * symmetry.
+		 */
+		fsnotify_open(file);
+	}
+	return ret;
 }

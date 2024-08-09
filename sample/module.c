@@ -16,7 +16,7 @@ extern void *find_func(const char *name);
 
 static void *vfs_read_fn;
 static void *vfs_open_fn;
-static void *fuse_open_common_fn;
+static void *fuse_open_fn;
 
 static int __init test_hookframe_init(void)
 {
@@ -24,10 +24,10 @@ static int __init test_hookframe_init(void)
 
 	vfs_read_fn = (void *)find_func("vfs_read"); 
 	vfs_open_fn = (void *)find_func("vfs_open");
-	fuse_open_common_fn = (void *)find_func("fuse_open_common");
+	fuse_open_fn = (void *)find_func("fuse_open");
 
 	if (!(vfs_read_fn &&
-		vfs_open_fn && fuse_open_common_fn)) {
+		vfs_open_fn && fuse_open_fn)) {
 		goto out;
 	}
 
@@ -64,12 +64,12 @@ static int __init test_hookframe_init(void)
 	}
 
 #ifndef _ARCH_POWERPC_
-	if (hijack_target_prepare(fuse_open_common_fn, GET_TEMPLATE_ADDERSS(fuse_open_common), GET_CODESPACE_ADDERSS(fuse_open_common))) {
-		printk(KERN_ALERT"fuse_open_common prepare error!\n");
+	if (hijack_target_prepare(fuse_open_fn, GET_TEMPLATE_ADDERSS(fuse_open), GET_CODESPACE_ADDERSS(fuse_open))) {
+		printk(KERN_ALERT"fuse_open prepare error!\n");
 		goto out;
 	}
-	if (hijack_target_enable(fuse_open_common_fn)) {
-		printk(KERN_ALERT"fuse_open_common enable error!\n");
+	if (hijack_target_enable(fuse_open_fn)) {
+		printk(KERN_ALERT"fuse_open enable error!\n");
 		goto out;
 	}
 #endif
@@ -78,10 +78,10 @@ static int __init test_hookframe_init(void)
 out:
 	hijack_target_disable(vfs_read_fn, true);
 	hijack_target_disable(vfs_open_fn, true);
-	if (!fuse_open_common_fn) {
+	if (!fuse_open_fn) {
 		printk(KERN_ALERT"Maybe forget to \"modprobe fuse\"?\n");
 	}
-	hijack_target_disable(fuse_open_common_fn, true);
+	hijack_target_disable(fuse_open_fn, true);
 	return ret;
 }
 
@@ -89,7 +89,7 @@ static void __exit test_hookframe_exit(void)
 {
 	hijack_target_disable(vfs_read_fn, true);
 	hijack_target_disable(vfs_open_fn, true);
-	hijack_target_disable(fuse_open_common_fn, true);
+	hijack_target_disable(fuse_open_fn, true);
 	printk(KERN_ALERT"unload hook framework test!\n");
 }
 
