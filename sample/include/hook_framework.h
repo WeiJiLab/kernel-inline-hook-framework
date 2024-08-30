@@ -7,5 +7,6 @@ extern int hijack_target_prepare(void *target, void *hook_dest, void *hook_templ
 extern int hijack_target_enable(void *target);
 extern int hijack_target_disable(void *target, bool need_remove);
 extern void hijack_target_disable_all(bool need_remove);
+extern void *find_func(const char *name);
 
 #endif

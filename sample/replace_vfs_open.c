@@ -27,3 +27,37 @@ int hook_vfs_open(const struct path *path, struct file *file)
 	}
 	return ret;
 }
+
+static void *vfs_open_fn = NULL;
+
+int hook_vfs_open_init(void)
+{
+	int ret = -EFAULT;
+
+	vfs_open_fn = (void *)find_func("vfs_open");
+	if (!vfs_open_fn)
+		goto out;
+
+	/*
+	* We will relace the original vfs_open with hook_vfs_open, so there is no
+	* need to resume to the original vfs_open, therefore leave the 3rd
+	* arguement to be NULL.
+	*/
+	if (hijack_target_prepare(vfs_open_fn, GET_TEMPLATE_ADDERSS(vfs_open), NULL)) {
+		printk(KERN_ALERT"vfs_open prepare error!\n");
+		goto out;
+	}
+	if (hijack_target_enable(vfs_open_fn)) {
+		printk(KERN_ALERT"vfs_open enable error!\n");
+		goto out;
+	}
+	return 0;
+out:
+	hijack_target_disable(vfs_open_fn, true);
+	return ret;
+}
+
+void hook_vfs_open_exit(void)
+{
+	hijack_target_disable(vfs_open_fn, true);
+}
