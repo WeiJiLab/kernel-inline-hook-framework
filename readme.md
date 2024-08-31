@@ -124,22 +124,10 @@ symbols just like EXPORT_SYMBOL symbols in hookFrameTest ko.
 I have tested the code in fedora38(arm64 and x86_64). Since there is no redhat
 option in 32bit, so 32bit is not tested. In addition, please check if there is
 "simplify_symbols" in /proc/kallsyms. If yes, then the code can be built and
-run directly. If no, please apply the following change then built:
+run directly. If no, please pass HAS_NO_SIMPLIFY_SYMBOLS=1 to make when built:
 
 ```
-diff --git a/src/Makefile b/src/Makefile
-index 7bbfe26..9ee06d7 100644
---- a/src/Makefile
-+++ b/src/Makefile
-@@ -3,7 +3,7 @@ obj-m += hookFrame.o
- hookFrame-y += framework/module.o
- hookFrame-y += framework/hijack_operation.o
- hookFrame-y += framework/stack_safety_check.o
--hookFrame-y += framework/symbol_resolver.o
-+hookFrame-y += framework/symbol_resolver_bak.o
- hookFrame-y += framework/write_map_page.o
- hookFrame-y += framework/proc_interface.o
- hookFrame-y += arch/$(ARCH)/hijack_$(ARCH).o
+make <TARGET> HAS_NO_SIMPLIFY_SYMBOLS=1 <KDIR=> ...
 ```
 
 Currently it support arm32, arm64, x86 and x86_64.
