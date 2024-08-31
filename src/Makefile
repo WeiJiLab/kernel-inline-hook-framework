@@ -3,7 +3,13 @@ obj-m += hookFrame.o
 hookFrame-y += framework/module.o
 hookFrame-y += framework/hijack_operation.o
 hookFrame-y += framework/stack_safety_check.o
+
+ifeq ($(HAS_NO_SYMBOL_RESOLVER),1)
+hookFrame-y += framework/symbol_resolver_bak.o
+else
 hookFrame-y += framework/symbol_resolver.o
+endif
+
 hookFrame-y += framework/write_map_page.o
 hookFrame-y += framework/proc_interface.o
 hookFrame-y += arch/$(ARCH)/hijack_$(ARCH).o

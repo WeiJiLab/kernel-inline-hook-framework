@@ -127,19 +127,7 @@ option in 32bit, so 32bit is not tested. In addition, please check if there is
 run directly. If no, please apply the following change then built:
 
 ```
-diff --git a/src/Makefile b/src/Makefile
-index 7bbfe26..9ee06d7 100644
---- a/src/Makefile
-+++ b/src/Makefile
-@@ -3,7 +3,7 @@ obj-m += hookFrame.o
- hookFrame-y += framework/module.o
- hookFrame-y += framework/hijack_operation.o
- hookFrame-y += framework/stack_safety_check.o
--hookFrame-y += framework/symbol_resolver.o
-+hookFrame-y += framework/symbol_resolver_bak.o
- hookFrame-y += framework/write_map_page.o
- hookFrame-y += framework/proc_interface.o
- hookFrame-y += arch/$(ARCH)/hijack_$(ARCH).o
+make arm64 KDIR=??? HAS_NO_SYMBOL_RESOLVER=1
 ```
 
 Currently it support arm32, arm64, x86 and x86_64.
