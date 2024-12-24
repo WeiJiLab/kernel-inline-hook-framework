@@ -2,7 +2,7 @@
 
 ## News
 
-1) PowerPC(ppc64le) hook support
+1) FreeBSD on x86_64 support
 
 ## Introduction ##
 
@@ -20,9 +20,9 @@ How can we manage that? Well it's time to bring inline hook technique to kernel 
 
 There will be 2 kernel modules:
 
-1) src/: The hook framework itself. In normal cases, you needn't modify its code, unless you are trying to fix bug, because we want to keep it as simple and independent to any customization. After compile, you will get hookFrame.ko.
+1) linux/src/: The hook framework itself. In normal cases, you needn't modify its code, unless you are trying to fix bug, because we want to keep it as simple and independent to any customization. After compile, you will get hookFrame.ko.
 
-2) sample/: The customized hook/replacement functions. Write your code here, and you can take hook_vfs_read.c, replace_vfs_open.c as reference when writing your own function. Also in module.c, you can  get a general view of how to register your function to hook framework. After compile, hookFrameTest.ko will be generated.
+2) linux/sample/: The customized hook/replacement functions. Write your code here, and you can take hook_vfs_read.c, replace_vfs_open.c as reference when writing your own function. Also in module.c, you can  get a general view of how to register your function to hook framework. After compile, hookFrameTest.ko will be generated.
 
 Sometimes you will find the vermagic of hookFrame.ko and hookFrameTest.ko different from your target kernel. You can pass the target kernel's vermagic string to make:
 
