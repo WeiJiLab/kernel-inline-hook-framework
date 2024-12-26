@@ -4,6 +4,8 @@
 $ make	# to build hookFrame.ko
 $ kldload ./hookFrame.ko
 $ kldunload hookFrame.ko
+$ echo "sys_openat 0" > /dev/hook_targets #Disable sys_openat's hook
+$ echo "sys_openat 1" > /dev/hook_targets #Enable sys_openat's hook
 ```
 
 #### Dev #####
@@ -13,9 +15,10 @@ inline hook framework and customized hook targets.
 
 #### Runtime #####
 
-Unlike linux, /proc/hook_targets interface has not been implemented, so users
-cannot enable/disable hooks by cmd echo. After ko file loaded successfully,
-there will be similar outputs in console as presented in the demo.
+"/dev/hook_targets" interface acts the same as "/proc/hook_targets" in linux,
+by which users can enable/disable hook functions by cmd echo. After ko file
+loaded successfully, there will be similar outputs in console as presented in
+the demo.
 
 ## Limits ##
 

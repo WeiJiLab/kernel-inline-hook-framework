@@ -13,6 +13,9 @@ static int init(void)
 	if ((ret = init_hijack_operation())) {
 		goto out;
 	}
+	if ((ret = init_dev_interface())) {
+		goto out;
+	}
 	if ((ret = hook_sys_openat_init())) {
 		goto out;
 	}
@@ -28,6 +31,7 @@ static void exit(void)
 {
 	hook_sys_openat_exit();
 	hook__fdrop_exit();
+	remove_dev_interface();
 	printf("hookFrame unloaded!\n");
 }
 

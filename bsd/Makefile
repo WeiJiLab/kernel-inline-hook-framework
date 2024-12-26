@@ -4,6 +4,7 @@ ARCH != echo $$(uname -m)
 SRCS+=framework/module.c
 SRCS+=framework/symbol_resolve.c
 SRCS+=framework/hijack_operation.c
+SRCS+=framework/dev_interface.c
 SRCS+=arch/$(ARCH)/hijack_$(ARCH).c
 SRCS+=vnode_if.h
 

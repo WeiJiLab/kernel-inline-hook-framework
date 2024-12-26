@@ -5,6 +5,8 @@
 #include <sys/rwlock.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/linker.h>
+#include <sys/uio.h>
 
 LIST_HEAD(sym_hook_list, sym_hook);
 static struct sym_hook_list sym_hook_list;
@@ -36,6 +38,32 @@ static int do_hijack_target(void *data)
 	void *source = ((struct do_hijack_struct *)data)->source;
 
 	return hook_write_range(dest, source, HIJACK_SIZE);
+}
+
+int show_all_hook_targets(char *buf, struct uio *uio)
+{
+	struct sym_hook *sa = NULL;
+	long offset = 0;
+	int res = 0;
+
+	if (uio->uio_offset > 0)
+		return 0;
+
+	rw_rlock(&sym_hook_list_lock);
+	LIST_FOREACH(sa, &sym_hook_list, node) {
+		memset(buf, 0, KSYM_NAME_LEN);
+		res = linker_ddb_search_symbol_name((caddr_t)sa->target,
+						buf, KSYM_NAME_LEN, &offset);
+		if (res)
+			continue;
+		offset = strlen(buf);
+		offset = offset < (KSYM_NAME_LEN - 3) ? offset : (KSYM_NAME_LEN - 3);
+		snprintf(buf + offset, KSYM_NAME_LEN - offset,
+			" %d\n", sa->enabled);
+		uiomove(buf, strlen(buf), uio);
+	}
+	rw_runlock(&sym_hook_list_lock);
+	return 0;
 }
 
 int hijack_target_prepare(void *target, void *hook_dest, void *hook_template_code_space)
