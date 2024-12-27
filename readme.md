@@ -2,7 +2,7 @@
 
 ## News
 
-1) FreeBSD on x86_64 support
+1) FreeBSD on x86_64/arm64 support
 
 ## Introduction ##
 
@@ -139,3 +139,14 @@ Please report any bugs to me: liutgnu@gmail.com, also any contributions are welc
 
 ## Demo ##
 ![demo](demo.gif)
+
+## Coffee ##
+
+A cup of coffee can make me code faster.
+
+<table>
+  <tr>
+    <td><img width="256" src="WeChatPay.jpg" /></td>
+    <td><a href="https://paypal.me/liutgnu"><img width="256" src="https://www.paypalobjects.com/digitalassets/c/website/logo/full-text/pp_fc_hl.svg" /><p align="center">Coffee me on PayPal</p></a></td>
+  </tr>
+</table>
