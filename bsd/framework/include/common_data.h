@@ -4,6 +4,9 @@
 #ifdef _amd64_
 #include "hijack_amd64.h"
 #endif
+#ifdef _arm64_
+#include "hijack_arm64.h"
+#endif
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/uio.h>

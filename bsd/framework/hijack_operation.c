@@ -103,7 +103,14 @@ int hijack_target_prepare(void *target, void *hook_dest, void *hook_template_cod
 	memcpy(sa->target_code, target, HIJACK_SIZE);
 	sa->hook_dest = hook_dest;
 	sa->hook_template_code_space = hook_template_code_space;
-	sa->template_return_addr = (char *)target + LONG_JMP_CODE_LEN - 1;
+	sa->template_return_addr = (char *)target
+#ifdef _arm64_
+	+ HIJACK_SIZE - 1 * INSTRUCTION_SIZE;
+#endif
+
+#ifdef _amd64_
+	+ LONG_JMP_CODE_LEN - 1;
+#endif
 	sa->enabled = false;
 
 	rw_wlock(&sym_hook_list_lock);
