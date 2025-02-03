@@ -84,6 +84,7 @@ bool check_target_can_hijack(void *target)
 
 int (*aarch64_insn_write_ptr)(void *, u32) = NULL;
 void *find_func(const char *name);
+void (*flush_icache_range_ptr)(unsigned long, unsigned long) = NULL;
 
 int hook_write_range(void *target, void *source, int size)
 {
@@ -95,6 +96,7 @@ int hook_write_range(void *target, void *source, int size)
             goto out;
         }
     }
+    flush_icache_range_ptr((unsigned long)target, (unsigned long)target + size);
 
 out:
     return ret; 
@@ -103,5 +105,9 @@ out:
 int init_arch(void)
 {
     aarch64_insn_write_ptr = (void *)find_func("aarch64_insn_write");
-    return !aarch64_insn_write_ptr;
+    flush_icache_range_ptr = (void *)find_func("caches_clean_inval_pou");
+    if (!flush_icache_range_ptr) {
+	flush_icache_range_ptr = (void *)find_func("__flush_icache_range");
+    }
+    return !(aarch64_insn_write_ptr && flush_icache_range_ptr);
 }
