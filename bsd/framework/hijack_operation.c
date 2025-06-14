@@ -73,7 +73,7 @@ int hijack_target_prepare(void *target, void *hook_dest, void *hook_template_cod
 
 	/*first, target function should longer than HIJACK_SIZE*/
 	if (!check_function_length_enough(target)) {
-		printf("%p short than hijack_size %d, cannot hijack...\n",
+		printf("%lx short than hijack_size %d, cannot hijack...\n",
 			target, HIJACK_SIZE);
 		ret = -1;
 		goto out;
@@ -84,7 +84,7 @@ int hijack_target_prepare(void *target, void *hook_dest, void *hook_template_cod
 	LIST_FOREACH(sa, &sym_hook_list, node) {
 		if (target == sa->target) {
 			rw_runlock(&sym_hook_list_lock);
-			printf("%p has been prepared, skip...\n", target);
+			printf("%lx has been prepared, skip...\n", target);
 			ret = -1;
 			goto out;
 		}
@@ -94,7 +94,7 @@ int hijack_target_prepare(void *target, void *hook_dest, void *hook_template_cod
 	/*check passed, now to allocation*/
 	sa = malloc(sizeof(*sa), M_HOOK, M_ZERO | M_WAITOK);
 	if (!sa) {
-		printf("No enough memory to hijack %p\n", target);
+		printf("No enough memory to hijack %lx\n", target);
 		ret = -1;
 		goto out;
 	}
@@ -150,13 +150,13 @@ int hijack_target_enable(void *target)
 					sa->enabled = true;
 				}
 			} else {
-				printf("%p has been hijacked, skip...\n", sa->target);
+				printf("%lx has been hijacked, skip...\n", sa->target);
 				ret = 0;
 			}
 			goto out;
 		}
 	}
-	printf("%p not been prepared, skip...\n", target);
+	printf("%lx not been prepared, skip...\n", target);
 out:
 	rw_wunlock(&sym_hook_list_lock);
 
@@ -179,19 +179,19 @@ int hijack_target_disable(void *target, bool need_remove)
 				if (!(ret = do_hijack_target(&do_hijack_struct)))
 					sa->enabled = false;
 			} else {
-				printf("%p has been disabled\n", sa->target);
+				printf("%lx has been disabled\n", sa->target);
 				ret = 0;
 			}
 
 			if (need_remove && !ret) {
-				printf("remove hijack target %p\n", target);
+				printf("remove hijack target %lx\n", target);
 				LIST_REMOVE(sa, node);
 				free(sa, M_HOOK);
 			}
 			goto out;
 		}
 	}
-	printf("%p not been prepared, skip...\n", target);
+	printf("%lx not been prepared, skip...\n", target);
 out:
 	rw_wunlock(&sym_hook_list_lock);
 

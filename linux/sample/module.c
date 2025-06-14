@@ -15,8 +15,7 @@ static int __init test_hookframe_init(void)
 {
 	int ret = -EFAULT;
 
-	if (hook_fuse_open_init())
-		goto out;
+	hook_fuse_open_init();
 	if (hook_vfs_open_init())
 		goto out;
 	if (hook_vfs_read_init())

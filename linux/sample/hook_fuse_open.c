@@ -4,7 +4,7 @@
 #include <linux/printk.h>
 
 HOOK_FUNC_TEMPLATE(fuse_open);
-int hook_fuse_open(struct inode *inode, struct file *file)
+__nocfi int hook_fuse_open(struct inode *inode, struct file *file)
 {
 	char *origin_fuse_open;
 

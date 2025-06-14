@@ -31,7 +31,7 @@ inline int check_address_in_stack(unsigned long addr, unsigned long stack_addr)
 /*
 * referenced from https://github.com/dynup/kpatch/blob/master/kmod/core/core.c
 */
-int stack_activeness_safety_check(unsigned long addr)
+__nocfi int stack_activeness_safety_check(unsigned long addr)
 {
     struct task_struct *g, *t;
     int ret = 0;
@@ -60,7 +60,7 @@ out:
         for (i = 0; i < trace.nr_entries; i++) {
             if (trace.entries[i] == ULONG_MAX)
                 break;
-            printk(KERN_ALERT"  [<%pK>] %pB\n", (void *)trace.entries[i], (void *)trace.entries[i]);
+            printk(KERN_ALERT"  [<%lx>] %pB\n", (void *)trace.entries[i], (void *)trace.entries[i]);
         }
     }
     return ret;

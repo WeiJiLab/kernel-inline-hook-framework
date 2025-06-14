@@ -14,7 +14,7 @@ int (*insn_decode_ptr)(struct insn *, const void *, int, enum insn_mode) = NULL;
 extern int (*core_kernel_text_ptr)(unsigned long);
 extern bool (*is_module_text_address_ptr)(unsigned long);
 
-int disass_target(void *target)
+__nocfi int disass_target(void *target)
 {
 	struct insn insn;
 	int off = 0, ret;
@@ -68,13 +68,13 @@ bool check_target_can_hijack(void *target)
 * we should use phys_to_page(__pa(target)), if we insert in kernel_module(to jump back to kernel), 
 * we should use vmalloc_to_page(target) instead
 */
-int remap_write_range(void *target, void *source, int size)
+__nocfi int remap_write_range(void *target, void *source, int size)
 {
 	struct page *page = NULL;
 	void *new_target = NULL;
 
 	if ((((unsigned long)target + size) ^ (unsigned long)target) & PAGE_MASK) {
-		printk(KERN_ALERT"Try to write word across page boundary %p\n", target);
+		printk(KERN_ALERT"Try to write word across page boundary %lx\n", target);
 		return -EFAULT;
 	}
 
@@ -83,18 +83,18 @@ int remap_write_range(void *target, void *source, int size)
 	} else if (is_module_text_address_ptr((unsigned long)target)) {
 		page = vmalloc_to_page(target);
 	} else {
-		printk(KERN_ALERT"Try to write to non kernel text address %p\n", target);
+		printk(KERN_ALERT"Try to write to non kernel text address %lx\n", target);
 		return -EFAULT;	    
 	}
 
 	if (!page) {
-		printk(KERN_ALERT"Cannot get page of address %p\n", target);
+		printk(KERN_ALERT"Cannot get page of address %lx\n", target);
 		return -EFAULT;
 	}
 
 	new_target = vm_map_ram(&page, 1, -1);
 	if (!new_target) {
-		printk(KERN_ALERT"Remap address %p failed\n", target);
+		printk(KERN_ALERT"Remap address %lx failed\n", target);
 		return -EFAULT;
 	} else {
 		memcpy(new_target + ((unsigned long)target & (~ PAGE_MASK)), source, size);

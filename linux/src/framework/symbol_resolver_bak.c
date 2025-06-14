@@ -75,7 +75,7 @@ static inline void module_assert_mutex_or_preempt(void)
 #endif
 }
 
-bool hook_find_symbol(struct find_symbol_arg *fsa)
+__nocfi bool hook_find_symbol(struct find_symbol_arg *fsa)
 {
 	struct module *mod;
 	unsigned int i;
@@ -123,7 +123,7 @@ static void operate_ksyms_cache(uint32_t status)
 	if (status & SHOW_KSYM_CACHE) {
 		read_lock(&ksyms_cache_hashtable_lock);
 		hash_for_each_safe(ksyms_cache_hashtable, bkt, tmp, ca, node) {
-			printk(KERN_ALERT"ksyms_cache: %s, %p\n", ca->ksym_name, ca->ksym_addr);
+			printk(KERN_ALERT"ksyms_cache: %s, %lx\n", ca->ksym_name, ca->ksym_addr);
 		}
 		read_unlock(&ksyms_cache_hashtable_lock);
 	}
@@ -138,7 +138,7 @@ static void operate_ksyms_cache(uint32_t status)
 	}
 }
 
-static bool resolve_kallsyms_symbol(struct find_symbol_arg *fsa)
+static __nocfi bool resolve_kallsyms_symbol(struct find_symbol_arg *fsa)
 {
 	struct kernel_symbol *sym = NULL;
 	void *sym_addr = NULL;
@@ -200,7 +200,7 @@ void remove_symbol_resolver_cache(void)
 	operate_ksyms_cache(CLEAN_ALL_KSYM_CACHE);
 }
 
-void *find_func(const char *name)
+__nocfi void *find_func(const char *name)
 {
 	void *ret = NULL;
 	ret = (void *)kallsyms_lookup_name_ptr(name);

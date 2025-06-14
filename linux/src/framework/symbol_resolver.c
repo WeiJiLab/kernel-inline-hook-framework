@@ -78,7 +78,7 @@ static unsigned long (*kallsyms_lookup_name_ptr)(const char *) = NULL;
 extern int hijack_target_prepare(void *, void *, void *);
 extern int hijack_target_enable(void *);
 
-void *find_func(const char *name)
+__nocfi void *find_func(const char *name)
 {
 	void *ret = NULL;
 	ret = (void *)kallsyms_lookup_name_ptr(name);
@@ -100,7 +100,7 @@ static inline void __percpu *mod_percpu(struct module *mod)
 #endif
 }
 
-static const struct kernel_symbol *
+static __nocfi const struct kernel_symbol *
 resolve_symbol_wait(struct module *mod,
 		    const struct load_info *info,
 		    const char *name)
@@ -142,7 +142,7 @@ static bool ignore_undef_symbol(Elf_Half emachine, const char *name)
 	return false;
 }
 
-int hook_simplify_symbols(struct module *mod, const struct load_info *info)
+__nocfi int hook_simplify_symbols(struct module *mod, const struct load_info *info)
 {
 	Elf_Shdr *symsec = &info->sechdrs[info->index.sym];
 	Elf_Sym *sym = (void *)symsec->sh_addr;

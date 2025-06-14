@@ -98,4 +98,4 @@ define compile
 endef
 
 clean:
-	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod)" | xargs rm -f
+	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod|usyms|symversions)" | xargs rm -f

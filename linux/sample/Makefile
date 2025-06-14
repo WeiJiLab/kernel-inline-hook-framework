@@ -86,4 +86,4 @@ endif
 compile = $(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) KBUILD_MODPOST_WARN=1 KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS) EXTRA_CFLAGS="$(2) -I$(PWD)/include -fno-pic" -C $(KDIR) M=$(PWD) modules
 
 clean:
-	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod)" | xargs rm -f
+	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod|usyms|symversions)" | xargs rm -f

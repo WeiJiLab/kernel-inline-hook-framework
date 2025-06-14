@@ -86,7 +86,7 @@ int (*aarch64_insn_write_ptr)(void *, u32) = NULL;
 void *find_func(const char *name);
 void (*flush_icache_range_ptr)(unsigned long, unsigned long) = NULL;
 
-int hook_write_range(void *target, void *source, int size)
+__nocfi int hook_write_range(void *target, void *source, int size)
 {
     int ret = 0, i;
  

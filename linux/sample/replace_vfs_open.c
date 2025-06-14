@@ -10,7 +10,7 @@ extern int do_dentry_open(struct file *f,
 			  int (*open)(struct inode *, struct file *));
 
 HOOK_FUNC_TEMPLATE(vfs_open);
-int hook_vfs_open(const struct path *path, struct file *file)
+__nocfi int hook_vfs_open(const struct path *path, struct file *file)
 {
 	int ret;
 

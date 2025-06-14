@@ -12,7 +12,7 @@ ssize_t hook_vfs_read(struct file *, char __user *, size_t, loff_t *);
 HOOK_FUNC_TEMPLATE(vfs_read);
 
 /* The hook function name must be "hook_ + origin_function_name" */
-ssize_t hook_vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
+__nocfi ssize_t hook_vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
 {
 	char *path_buffer = NULL;
 	char *result = NULL;
