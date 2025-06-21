@@ -74,7 +74,8 @@ __nocfi int remap_write_range(void *target, void *source, int size)
 	void *new_target = NULL;
 
 	if ((((unsigned long)target + size) ^ (unsigned long)target) & PAGE_MASK) {
-		printk(KERN_ALERT"Try to write word across page boundary %lx\n", target);
+		printk(KERN_ALERT"Try to write word across page boundary %lx\n",
+			(unsigned long)target);
 		return -EFAULT;
 	}
 
@@ -83,18 +84,21 @@ __nocfi int remap_write_range(void *target, void *source, int size)
 	} else if (is_module_text_address_ptr((unsigned long)target)) {
 		page = vmalloc_to_page(target);
 	} else {
-		printk(KERN_ALERT"Try to write to non kernel text address %lx\n", target);
+		printk(KERN_ALERT"Try to write to non kernel text address %lx\n",
+			(unsigned long)target);
 		return -EFAULT;	    
 	}
 
 	if (!page) {
-		printk(KERN_ALERT"Cannot get page of address %lx\n", target);
+		printk(KERN_ALERT"Cannot get page of address %lx\n",
+			(unsigned long)target);
 		return -EFAULT;
 	}
 
 	new_target = vm_map_ram(&page, 1, -1);
 	if (!new_target) {
-		printk(KERN_ALERT"Remap address %lx failed\n", target);
+		printk(KERN_ALERT"Remap address %lx failed\n",
+			(unsigned long)target);
 		return -EFAULT;
 	} else {
 		memcpy(new_target + ((unsigned long)target & (~ PAGE_MASK)), source, size);

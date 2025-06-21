@@ -34,7 +34,7 @@ static int disass_target(void *target)
 			&decodedInstructionsCount);
 
 	if (res == DECRES_INPUTERR) {
-		printf("Disassemble %lx failed!\n", target);
+		printf("Disassemble %lx failed!\n", (unsigned long)target);
 		return -1;
 	}
 

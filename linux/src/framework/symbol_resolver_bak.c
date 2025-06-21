@@ -123,7 +123,8 @@ static void operate_ksyms_cache(uint32_t status)
 	if (status & SHOW_KSYM_CACHE) {
 		read_lock(&ksyms_cache_hashtable_lock);
 		hash_for_each_safe(ksyms_cache_hashtable, bkt, tmp, ca, node) {
-			printk(KERN_ALERT"ksyms_cache: %s, %lx\n", ca->ksym_name, ca->ksym_addr);
+			printk(KERN_ALERT"ksyms_cache: %s, %lx\n", ca->ksym_name,
+					(unsigned long)(ca->ksym_addr));
 		}
 		read_unlock(&ksyms_cache_hashtable_lock);
 	}

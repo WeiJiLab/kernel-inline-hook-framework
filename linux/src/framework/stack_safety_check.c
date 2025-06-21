@@ -60,7 +60,7 @@ out:
         for (i = 0; i < trace.nr_entries; i++) {
             if (trace.entries[i] == ULONG_MAX)
                 break;
-            printk(KERN_ALERT"  [<%lx>] %pB\n", (void *)trace.entries[i], (void *)trace.entries[i]);
+            printk(KERN_ALERT"  [<%lx>] %pB\n", (unsigned long)trace.entries[i], (void *)trace.entries[i]);
         }
     }
     return ret;
