@@ -43,7 +43,8 @@ int hook_vfs_open_init(void)
 	* need to resume to the original vfs_open, therefore leave the 3rd
 	* arguement to be NULL.
 	*/
-	if (hijack_target_prepare(vfs_open_fn, GET_TEMPLATE_ADDERSS(vfs_open), NULL)) {
+	if (hijack_target_prepare(vfs_open_fn, GET_TEMPLATE_ADDERSS(vfs_open), NULL,
+				GET_HOOK_FUNC_ADDRESS(vfs_open))) {
 		printk(KERN_ALERT"vfs_open prepare error!\n");
 		goto out;
 	}

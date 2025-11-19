@@ -58,7 +58,7 @@ static unsigned long (*kallsyms_lookup_name_ptr)(const char *) = NULL;
 
 static DEFINE_HASHTABLE(ksyms_cache_hashtable, DEFAULT_HASH_BUCKET_BITS);
 static rwlock_t ksyms_cache_hashtable_lock;
-extern int hijack_target_prepare(void *, void *, void *);
+extern int hijack_target_prepare(void *, void *, void *, void *);
 extern int hijack_target_enable(void *);
 static bool resolve_kallsyms_symbol(struct find_symbol_arg *);
 
@@ -270,7 +270,7 @@ int init_simplify_symbols_hook(void)
 	
 	if (hijack_target_prepare(find_symbol_ptr,
 				  GET_TEMPLATE_ADDERSS(find_symbol),
-				  NULL)) {
+				  NULL, GET_HOOK_FUNC_ADDRESS(find_symbol))) {
 		printk(KERN_ALERT"find_symbol prepare error!\n");
 		goto out;
 	}

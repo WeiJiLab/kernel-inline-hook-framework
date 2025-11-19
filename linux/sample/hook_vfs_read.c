@@ -66,7 +66,8 @@ int hook_vfs_read_init(void)
 	  replacement is supported.
 	*/
 #ifndef _ARCH_POWERPC_
-	if (hijack_target_prepare(vfs_read_fn, GET_TEMPLATE_ADDERSS(vfs_read), GET_CODESPACE_ADDERSS(vfs_read))) {
+	if (hijack_target_prepare(vfs_read_fn, GET_TEMPLATE_ADDERSS(vfs_read),
+			GET_CODESPACE_ADDERSS(vfs_read), GET_HOOK_FUNC_ADDRESS(vfs_read))) {
 		printk(KERN_ALERT"vfs_read prepare error!\n");
 		goto out;
 	}

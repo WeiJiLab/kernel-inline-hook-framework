@@ -1,75 +1,76 @@
-#ifndef CONFIG_STACKTRACE
-#define CONFIG_STACKTRACE
-#endif
-#ifdef CONFIG_ARCH_STACKWALK
-#undef CONFIG_ARCH_STACKWALK
-#endif
 #include<linux/stacktrace.h>
 #include<linux/kernel.h>
 #include<linux/sched.h>
-#include<linux/sched/signal.h>
+#include<linux/printk.h>
 #include "include/common_data.h"
 
-#define MAC_STACK_TRACE_DEPTH 64
-void (*save_stack_trace_tsk_ptr)(struct task_struct *,
-    struct stack_trace *) = NULL;
+#define MAX_STACK_TRACE_DEPTH 64
+unsigned int (*stack_trace_save_tsk_ptr)(struct task_struct *,
+	unsigned long *, unsigned int, unsigned int) = NULL;
 
-static unsigned long stack_entries[MAC_STACK_TRACE_DEPTH];
-static struct stack_trace trace = {
-    .max_entries = ARRAY_SIZE(stack_entries),
-    .entries = &stack_entries[0],
-};
+static unsigned long entries[MAX_STACK_TRACE_DEPTH];
+static unsigned int nr_entries;
 
-inline int check_address_in_stack(unsigned long addr, unsigned long stack_addr)
+extern int (*kallsyms_lookup_size_offset_ptr)(unsigned long,
+    unsigned long *, unsigned long *);
+
+inline int check_address_in_stack(unsigned long addr, unsigned long stack_addr,
+				unsigned long hook_func)
 {
-    if (stack_addr >= addr && stack_addr < addr + HIJACK_SIZE) {
-        return -16; //EBUSY
-    }
-    return 0;
+	int ret = 0;
+	unsigned long symbolsize = 0, offset = 0;
+
+	if (stack_addr >= addr && stack_addr < addr + HIJACK_SIZE) {
+		ret = -16; //EBUSY
+		goto out;
+	}
+	if (hook_func && kallsyms_lookup_size_offset_ptr) {
+		if (!kallsyms_lookup_size_offset_ptr(hook_func, &symbolsize, &offset)) {
+			goto out;
+		}
+		if (stack_addr >= hook_func - offset &&
+		    stack_addr < hook_func - offset + symbolsize) {
+			ret = -16; //EBUSY
+		}
+	}
+out:
+	return ret;
 }
 
 /*
 * referenced from https://github.com/dynup/kpatch/blob/master/kmod/core/core.c
 */
-__nocfi int stack_activeness_safety_check(unsigned long addr)
+__nocfi int stack_activeness_safety_check(unsigned long addr, unsigned long hook_func)
 {
-    struct task_struct *g, *t;
-    int ret = 0;
-    int i;
-    for_each_process_thread(g, t) {
-        trace.nr_entries = 0;
-        (*save_stack_trace_tsk_ptr)(t, &trace);
-        if (trace.nr_entries >= trace.max_entries) {
-            ret = -16; //EBUSY
-            printk(KERN_ALERT"More than %d max trace entries!\n", trace.max_entries);
-            goto out;
-        }
+	struct task_struct *g, *t;
+	int ret = 0;
+	int i;
 
-        for (i = 0; i < trace.nr_entries; i++) {
-            if (trace.entries[i] == ULONG_MAX)
-                break;
-            ret = check_address_in_stack(addr, trace.entries[i]);
-            if (ret)
-                goto out;
-        }
-    }
+	for_each_process_thread(g, t) {
+		nr_entries = (*stack_trace_save_tsk_ptr)
+				(t, entries, MAX_STACK_TRACE_DEPTH, 0);
+		for (i = 0; i < nr_entries; i++) {
+			ret = check_address_in_stack(addr, entries[i], hook_func);
+			if (ret)
+				goto out;
+		}
+	}
 
 out:
-    if (ret) {
-        printk(KERN_ALERT"PID: %d Comm: %.20s\n", t->pid, t->comm);
-        for (i = 0; i < trace.nr_entries; i++) {
-            if (trace.entries[i] == ULONG_MAX)
-                break;
-            printk(KERN_ALERT"  [<%lx>] %pB\n", (unsigned long)trace.entries[i], (void *)trace.entries[i]);
-        }
-    }
-    return ret;
+	if (ret) {
+		printk(KERN_ALERT"Wait for PID: %d Comm: %.20s\n", t->pid, t->comm);
+		for (i = 0; i < nr_entries; i++) {
+			printk(KERN_ALERT"  [<%lx>] %pB\n", entries[i], (void *)entries[i]);
+		}
+	}
+	return ret;
 }
 
 void init_stack_safety_check(void)
 {
-    save_stack_trace_tsk_ptr = find_func("save_stack_trace_tsk");
-    if (!save_stack_trace_tsk_ptr) {
-        printk(KERN_ALERT"Your kernel should be \"CONFIG_STACKTRACE && !CONFIG_ARCH_STACKWALK\", skip stack safety check and use as your risk!!!\n");
-    }
+	stack_trace_save_tsk_ptr = find_func("stack_trace_save_tsk");
+	if (!stack_trace_save_tsk_ptr) {
+		printk(KERN_ALERT"Your kernel should be CONFIG_STACKTRACE,"
+			" skip stack safety check and use as your risk!!!\n");
+	}
 }

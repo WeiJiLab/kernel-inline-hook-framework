@@ -31,6 +31,13 @@ asm (  \
     codespace;  \
 })
 
+#define GET_HOOK_FUNC_ADDRESS(s) \
+({  \
+    void *hook_func; \
+    __asm__ volatile ("ldr %0, =hook_"#s"\n\t":"=r"(hook_func)); \
+    hook_func;  \
+})
+
 #define INSTRUCTION_SIZE 4
 #define HIJACK_INST_NUM 2
 #define HIJACK_SIZE (INSTRUCTION_SIZE * HIJACK_INST_NUM)

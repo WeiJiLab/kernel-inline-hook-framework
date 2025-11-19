@@ -27,7 +27,8 @@ int hook_fuse_open_init(void)
 	/*
 	* Same as hook_vfs_read(), please refer to it for code explaination.
 	*/
-	if (hijack_target_prepare(fuse_open_fn, GET_TEMPLATE_ADDERSS(fuse_open), GET_CODESPACE_ADDERSS(fuse_open))) {
+	if (hijack_target_prepare(fuse_open_fn, GET_TEMPLATE_ADDERSS(fuse_open),
+		GET_CODESPACE_ADDERSS(fuse_open), GET_HOOK_FUNC_ADDRESS(fuse_open))) {
 		printk(KERN_ALERT"fuse_open prepare error!\n");
 		goto out;
 	}

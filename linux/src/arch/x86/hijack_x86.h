@@ -36,6 +36,13 @@ asm (  \
     codespace;  \
 })
 
+#define GET_HOOK_FUNC_ADDRESS(s) \
+({  \
+    void *hook_func; \
+    __asm__ volatile ("mov $hook_"#s", %0\n\t":"=r"(hook_func)); \
+    hook_func; \
+})
+
 #define HIJACK_SIZE 16
 #define LONG_JMP_CODE_LEN 9
 int fill_nop_for_target(void *, void *);

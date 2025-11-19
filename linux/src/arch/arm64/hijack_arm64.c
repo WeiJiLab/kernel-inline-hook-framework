@@ -88,26 +88,25 @@ void (*flush_icache_range_ptr)(unsigned long, unsigned long) = NULL;
 
 __nocfi int hook_write_range(void *target, void *source, int size)
 {
-    int ret = 0, i;
- 
-    for (i = 0; i < size; i = i + INSTRUCTION_SIZE) {
-        ret = aarch64_insn_write_ptr(target + i, *(u32 *)(source + i));
-        if (ret) {
-            goto out;
-        }
-    }
-    flush_icache_range_ptr((unsigned long)target, (unsigned long)target + size);
+	int ret = 0, i;
 
+	for (i = 0; i < size; i = i + INSTRUCTION_SIZE) {
+		ret = aarch64_insn_write_ptr(target + i, *(u32 *)(source + i));
+		if (ret) {
+			goto out;
+		}
+	}
+	flush_icache_range_ptr((unsigned long)target, (unsigned long)target + size);
 out:
-    return ret; 
+	return ret;
 }
 
 int init_arch(void)
 {
-    aarch64_insn_write_ptr = (void *)find_func("aarch64_insn_write");
-    flush_icache_range_ptr = (void *)find_func("caches_clean_inval_pou");
-    if (!flush_icache_range_ptr) {
-	flush_icache_range_ptr = (void *)find_func("__flush_icache_range");
-    }
-    return !(aarch64_insn_write_ptr && flush_icache_range_ptr);
+	aarch64_insn_write_ptr = (void *)find_func("aarch64_insn_write");
+	flush_icache_range_ptr = (void *)find_func("caches_clean_inval_pou");
+	if (!flush_icache_range_ptr) {
+		flush_icache_range_ptr = (void *)find_func("__flush_icache_range");
+	}
+	return !(aarch64_insn_write_ptr && flush_icache_range_ptr);
 }

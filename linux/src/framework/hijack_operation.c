@@ -8,11 +8,11 @@
 #include <linux/kallsyms.h>
 #include "include/common_data.h"
 
-extern int hook_write_range(void *, void *, int, bool);
-extern int stack_activeness_safety_check(unsigned long);
+extern int hook_write_range(void *, void *, int);
+extern int stack_activeness_safety_check(unsigned long, unsigned long);
 extern void fill_long_jmp(void *, void *);
 extern bool check_target_can_hijack(void *);
-extern void *save_stack_trace_tsk_ptr;
+extern void *stack_trace_save_tsk_ptr;
 
 DEFINE_HASHTABLE(all_hijack_targets, DEFAULT_HASH_BUCKET_BITS);
 static DECLARE_RWSEM(hijack_targets_hashtable_lock);
@@ -29,29 +29,32 @@ inline int fill_hook_template_code_space(void *hook_template_code_space,
         return -1;
     }
     fill_long_jmp(tmp_code + HIJACK_SIZE, return_addr);
-    return hook_write_range(hook_template_code_space, tmp_code, sizeof(tmp_code), false);
+    return hook_write_range(hook_template_code_space, tmp_code, sizeof(tmp_code));
 }
 
 struct do_hijack_struct {
-    void *dest;
-    void *source;
+	void *dest;
+	void *source;
+	void *hook_func;
 };
 
 __nocfi int do_hijack_target(void *data)
 {
-    void *dest = ((struct do_hijack_struct *)data)->dest;
-    void *source = ((struct do_hijack_struct *)data)->source;
-    int ret = 0;
+	void *dest = ((struct do_hijack_struct *)data)->dest;
+	void *source = ((struct do_hijack_struct *)data)->source;
+	void *hook_func = ((struct do_hijack_struct *)data)->hook_func;
+	int ret = 0;
 
-    /*if CONFIG_STACKTRACE not enabled, skip stack safety check*/
-    if (!save_stack_trace_tsk_ptr) {
-        return hook_write_range(dest, source, HIJACK_SIZE, true);
-    }
+	/*if CONFIG_STACKTRACE not enabled, skip stack safety check*/
+	if (!stack_trace_save_tsk_ptr) {
+		return hook_write_range(dest, source, HIJACK_SIZE);
+	}
 
-    if (!(ret = stack_activeness_safety_check((unsigned long)dest))) {  //no problem
-        ret = hook_write_range(dest, source, HIJACK_SIZE, true);
-    }
-    return ret;
+	if (!(ret = stack_activeness_safety_check((unsigned long)dest,
+	    (unsigned long)hook_func))) {  //no problem
+		ret = hook_write_range(dest, source, HIJACK_SIZE);
+	}
+	return ret;
 }
 
 __nocfi bool check_function_length_enough(void *target)
@@ -82,7 +85,8 @@ int show_all_hook_targets(struct seq_file *p, void *v)
     return 0;
 }
 
-int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_code_space)
+int hijack_target_prepare (void *target, void *hook_dest,
+		void *hook_template_code_space, void *hook_func)
 {
     struct sym_hook *sa = NULL;
     uint32_t ptr_hash;
@@ -132,6 +136,7 @@ int hijack_target_prepare (void *target, void *hook_dest, void *hook_template_co
     memcpy(sa->target_code, target, HIJACK_SIZE);
     sa->hook_dest = hook_dest;
     sa->hook_template_code_space = hook_template_code_space;
+    sa->hook_func = hook_func;
     sa->template_return_addr = target
 #ifdef _ARCH_ARM64_
     + HIJACK_SIZE - 1 * INSTRUCTION_SIZE;
@@ -187,6 +192,7 @@ int hijack_target_enable(void *target)
                 fill_long_jmp(source_code, sa->hook_dest);
                 if ((ret = fill_nop_for_target(source_code, sa->target)))
                     goto out;
+		do_hijack_struct.hook_func = sa->hook_func;
                 if (!(ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL))) {
                     sa->enabled = true;
                 }
@@ -225,8 +231,10 @@ int hijack_target_disable(void *target, bool need_remove)
             sprint_symbol_no_offset(name_buf, (unsigned long)(sa->target));
             if (sa->enabled == true) {
                 do_hijack_struct.source = sa->target_code;
-                if (!(ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL)))
+                do_hijack_struct.hook_func = sa->hook_func;
+                if (!(ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL))) {
                     sa->enabled = false;
+		}
             } else {
                 printk(KERN_ALERT"%s has been disabled\n", name_buf);
                 ret = 0;
@@ -263,6 +271,7 @@ void hijack_target_disable_all(bool need_remove)
             if (sa->enabled == true) {
                 do_hijack_struct.dest = sa->target;
                 do_hijack_struct.source = sa->target_code;
+                do_hijack_struct.hook_func = sa->hook_func;
                 if (stop_machine(do_hijack_target, &do_hijack_struct, NULL)) {
                     retry = true;
                     continue;

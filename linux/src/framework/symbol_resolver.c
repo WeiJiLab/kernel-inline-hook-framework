@@ -75,7 +75,7 @@ static const struct kernel_symbol *(*resolve_symbol_ptr)(struct module *,
 						  char []) = NULL;
 static struct wait_queue_head *module_wq_ptr = NULL;
 static unsigned long (*kallsyms_lookup_name_ptr)(const char *) = NULL;
-extern int hijack_target_prepare(void *, void *, void *);
+extern int hijack_target_prepare(void *, void *, void *, void *);
 extern int hijack_target_enable(void *);
 
 __nocfi void *find_func(const char *name)
@@ -260,7 +260,7 @@ int init_simplify_symbols_hook(void)
 	
 	if (hijack_target_prepare(simplify_symbols_ptr,
 				  GET_TEMPLATE_ADDERSS(simplify_symbols),
-				  NULL)) {
+				  NULL, GET_HOOK_FUNC_ADDRESS(simplify_symbols))) {
 		printk(KERN_ALERT"simplify_symbols prepare error!\n");
 		goto out;
 	}

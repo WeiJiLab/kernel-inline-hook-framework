@@ -58,6 +58,7 @@ struct sym_hook {
 	void *hook_dest;
 	void *template_return_addr;
 	void *hook_template_code_space;
+	void *hook_func;
 	bool enabled;
 	struct hlist_node node;
 	unsigned char target_code[HIJACK_SIZE];
