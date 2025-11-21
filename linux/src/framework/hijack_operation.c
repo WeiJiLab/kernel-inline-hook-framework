@@ -38,6 +38,12 @@ struct do_hijack_struct {
 	void *hook_func;
 };
 
+/*
+ * -3: write hook fail
+ * -2: stack within hook area(cannot write hook, retry later)
+ * -1: stack within hook_func area(can write hook, retry later)
+ *  0: success(can release memory immediately)
+*/
 __nocfi int do_hijack_target(void *data)
 {
 	void *dest = ((struct do_hijack_struct *)data)->dest;
@@ -46,14 +52,16 @@ __nocfi int do_hijack_target(void *data)
 	int ret = 0;
 
 	/*if CONFIG_STACKTRACE not enabled, skip stack safety check*/
-	if (!stack_trace_save_tsk_ptr) {
-		return hook_write_range(dest, source, HIJACK_SIZE);
-	}
+	if (!stack_trace_save_tsk_ptr)
+		goto hook_write;
 
-	if (!(ret = stack_activeness_safety_check((unsigned long)dest,
-	    (unsigned long)hook_func))) {  //no problem
-		ret = hook_write_range(dest, source, HIJACK_SIZE);
-	}
+	ret = stack_activeness_safety_check((unsigned long)dest,
+					(unsigned long)hook_func);
+	if (ret == -2)
+		goto out;
+hook_write:
+	ret = hook_write_range(dest, source, HIJACK_SIZE) ? -3 : ret;
+out:
 	return ret;
 }
 
@@ -213,81 +221,99 @@ EXPORT_SYMBOL(hijack_target_enable);
 
 int hijack_target_disable(void *target, bool need_remove)
 {
-    struct sym_hook *sa;
-    struct hlist_node *tmp;
-    uint32_t ptr_hash;
-    int ret = -1;
-    struct do_hijack_struct do_hijack_struct;
-    
-    target += HOOK_TARGET_OFFSET;
-    ptr_hash = jhash_pointer(target);    
-    do_hijack_struct = (struct do_hijack_struct) {
-        .dest = target
-    };    
+	struct sym_hook *sa;
+	struct hlist_node *tmp;
+	uint32_t ptr_hash;
+	int ret = -1;
+	struct do_hijack_struct do_hijack_struct;
 
-    down_write(&hijack_targets_hashtable_lock);
-    hash_for_each_possible_safe(all_hijack_targets, sa, tmp, node, ptr_hash) {
-        if (sa->target == target) {
-            sprint_symbol_no_offset(name_buf, (unsigned long)(sa->target));
-            if (sa->enabled == true) {
-                do_hijack_struct.source = sa->target_code;
-                do_hijack_struct.hook_func = sa->hook_func;
-                if (!(ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL))) {
-                    sa->enabled = false;
+	target += HOOK_TARGET_OFFSET;
+	ptr_hash = jhash_pointer(target);
+	do_hijack_struct = (struct do_hijack_struct) {
+		.dest = target
+	};
+
+	down_write(&hijack_targets_hashtable_lock);
+	hash_for_each_possible_safe(all_hijack_targets, sa, tmp, node, ptr_hash) {
+		if (sa->target == target) {
+			sprint_symbol_no_offset(name_buf, (unsigned long)(sa->target));
+			do_hijack_struct.source = sa->target_code;
+			do_hijack_struct.hook_func = sa->hook_func;
+			ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL);
+			switch (ret) {
+			case 0:
+			case -1:
+				sa->enabled = false;
+				break;
+			case -2:
+			case -3:
+				break;
+			default:
+				printk(KERN_ALERT"Unknown exit value: %d\n", ret);
+				break;
+			}
+			if (sa->enabled == false)
+				printk(KERN_ALERT"%s has been disabled\n", name_buf);
+
+			if (need_remove && !ret) {
+				printk(KERN_ALERT"remove hijack target %s\n", name_buf);
+				hash_del(&sa->node);
+				kfree(sa);
+			}
+			goto out;
 		}
-            } else {
-                printk(KERN_ALERT"%s has been disabled\n", name_buf);
-                ret = 0;
-            }
-
-            if (need_remove && !ret) {
-                printk(KERN_ALERT"remove hijack target %s\n", name_buf);
-                hash_del(&sa->node);
-                kfree(sa);
-            }
-            goto out;
-        }
-    }
-    printk(KERN_ALERT"%lx not been prepared, skip...\n", (unsigned long)target);
+	}
+	printk(KERN_ALERT"%lx not been prepared, skip...\n", (unsigned long)target);
 out:
-    up_write(&hijack_targets_hashtable_lock);
+	up_write(&hijack_targets_hashtable_lock);
 
-    return ret;
+	return ret;
 }
 EXPORT_SYMBOL(hijack_target_disable);
 
 void hijack_target_disable_all(bool need_remove)
 {
-    struct sym_hook *sa;
-    struct hlist_node *tmp;
-    int bkt;
-    bool retry;
-    struct do_hijack_struct do_hijack_struct;
+	struct sym_hook *sa;
+	struct hlist_node *tmp;
+	int bkt;
+	bool retry;
+	struct do_hijack_struct do_hijack_struct;
+	int ret;
 
-    do {
-        retry = false;
-        down_write(&hijack_targets_hashtable_lock);
-        hash_for_each_safe(all_hijack_targets, bkt, tmp, sa, node) {
-            if (sa->enabled == true) {
-                do_hijack_struct.dest = sa->target;
-                do_hijack_struct.source = sa->target_code;
-                do_hijack_struct.hook_func = sa->hook_func;
-                if (stop_machine(do_hijack_target, &do_hijack_struct, NULL)) {
-                    retry = true;
-                    continue;
-                }
-                sa->enabled = false;
-            }
-            if (need_remove) {
-                hash_del(&sa->node);
-                kfree(sa);
-            }
-        }
-        up_write(&hijack_targets_hashtable_lock);
-    } while(retry && (msleep(1000), true));
+	do {
+		retry = false;
+		down_write(&hijack_targets_hashtable_lock);
+		hash_for_each_safe(all_hijack_targets, bkt, tmp, sa, node) {
+			do_hijack_struct.dest = sa->target;
+			do_hijack_struct.source = sa->target_code;
+			do_hijack_struct.hook_func = sa->hook_func;
+			ret = stop_machine(do_hijack_target, &do_hijack_struct, NULL);
+			switch (ret) {
+			case 0:
+				sa->enabled = false;
+				break;
+			case -1:
+				sa->enabled = false;
+				retry = true;
+				break;
+			case -2:
+			case -3:
+				retry = true;
+				break;
+			default:
+				printk(KERN_ALERT"Unknown exit value: %d\n", ret);
+				break;
+			}
+			if (need_remove && !ret) {
+				hash_del(&sa->node);
+				kfree(sa);		
+			}
+		}
+		up_write(&hijack_targets_hashtable_lock);
+	} while(retry && (msleep(1000), true));
 
-    printk(KERN_ALERT"all hijacked target disabled%s\n", need_remove ?" and removed":"");
-    return;
+	printk(KERN_ALERT"all hijacked target disabled%s\n", need_remove ?" and removed":"");
+	return;
 }
 EXPORT_SYMBOL(hijack_target_disable_all);
 

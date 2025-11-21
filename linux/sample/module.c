@@ -1,5 +1,6 @@
 #include <linux/module.h>
 #include <linux/printk.h>
+#include "hook_framework.h"
 
 MODULE_AUTHOR("Liu Tao <ltao@redhat.com>");
 MODULE_LICENSE("GPL");
@@ -31,9 +32,7 @@ out:
 
 static void __exit test_hookframe_exit(void)
 {
-	hook_fuse_open_exit();
-	hook_vfs_open_exit();
-	hook_vfs_read_exit();
+	hijack_target_disable_all(true);
 	printk(KERN_ALERT"unload hook framework test!\n");
 }
 
