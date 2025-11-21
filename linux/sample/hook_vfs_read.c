@@ -52,15 +52,17 @@ int hook_vfs_read_init(void)
 	if (!vfs_read_fn)
 		goto out;
 
-	/*
-	* template address is the trampoline where kernel function been hijacked to,
-	* codespace address is the original kernel function which been hijacked and repositioned to resume.
-	* If you want to replace the whole function, then leave the 3rd parameter of "hijack_target_prepare"
-	* to NULL.
-	* If you only want to insert your hook before or after a certain function, then leave it to be
-	* "GET_CODESPACE_ADDERSS(xx_func)"
-	*/
-
+	/**
+	 * arg1: the original function address which you'd like to hijack.
+	 * arg2: GET_TEMPLATE_ADDERSS() is the trampoline template address
+	 *       that your original function will be hijacked to firstly.
+	 *       Then the trampoline will jump to your hook function.
+	 * arg3: GET_CODESPACE_ADDERSS() is the new address of your original
+	 *       function, if you'd like to call it later. If you will never
+	 *       call the original function, simply leave it to be NULL.
+	 * arg4: GET_HOOK_FUNC_ADDRESS() is your hook function address, which
+	 *       is used for stack safety check when disabling the hook.
+	 */
 	/*
 	  For powerpc, function resume is not supported, currently only function
 	  replacement is supported.

@@ -38,11 +38,12 @@ int hook_vfs_open_init(void)
 	if (!vfs_open_fn)
 		goto out;
 
-	/*
-	* We will relace the original vfs_open with hook_vfs_open, so there is no
-	* need to resume to the original vfs_open, therefore leave the 3rd
-	* arguement to be NULL.
-	*/
+	/**
+	 * Please refer to hook_vfs_read_init() for arguments explaination.
+	 * For whole function replacement, replicate the original function
+	 * within your hook function, like what hook_vfs_open() does for
+	 * vfs_open(), and leave 3rd arg as NULL.
+	 */
 	if (hijack_target_prepare(vfs_open_fn, GET_TEMPLATE_ADDERSS(vfs_open), NULL,
 				GET_HOOK_FUNC_ADDRESS(vfs_open))) {
 		printk(KERN_ALERT"vfs_open prepare error!\n");
