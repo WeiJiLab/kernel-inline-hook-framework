@@ -138,8 +138,11 @@ In addition, in order to make hook framework work properly, target kernel's conf
 ## Bugs ##
 Please report any bugs to me: liutgnu@gmail.com, also any contributions are welcomed. Happy hacking!!!
 
-## Demo ##
+## Demo for Linux ##
 ![demo](demo.gif)
+
+## Demo for Android ##
+https://github.com/user-attachments/assets/d573ed3a-3b16-4b25-9297-716998738f61
 
 ## Coffee ##
 
