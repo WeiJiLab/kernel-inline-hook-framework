@@ -142,7 +142,7 @@ Please report any bugs to me: liutgnu@gmail.com, also any contributions are welc
 ![demo](demo.gif)
 
 ## Demo for Android ##
-https://github.com/user-attachments/assets/d573ed3a-3b16-4b25-9297-716998738f61
+https://github.com/user-attachments/assets/d7c4dda6-f143-4786-a296-a0e27c61a8be
 
 ## Coffee ##
 
