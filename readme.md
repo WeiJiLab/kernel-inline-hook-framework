@@ -144,6 +144,14 @@ Please report any bugs to me: liutgnu@gmail.com, also any contributions are welc
 ## Demo for Android ##
 https://github.com/user-attachments/assets/d7c4dda6-f143-4786-a296-a0e27c61a8be
 
+## Hook Mechanism(arm64 as example) ##
+Function unhooked:
+<img width="980" height="552" alt="1" src="https://github.com/user-attachments/assets/ba93b2d2-6404-4663-ad51-0a73a1724cff" />
+Function been hooked and replaced:
+<img width="982" height="554" alt="2" src="https://github.com/user-attachments/assets/b2489382-4070-453e-82f1-f2ec24c02657" />
+Function been hooked and able to resume:
+<img width="981" height="553" alt="3" src="https://github.com/user-attachments/assets/168ff3d7-9f29-408b-acbc-a77ceb1ea3e3" />
+
 ## Coffee ##
 
 A cup of coffee can make me code faster.
