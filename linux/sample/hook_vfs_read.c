@@ -1,5 +1,4 @@
 #include "include/common_data.h"
-#include "hook_framework.h"
 #include <linux/path.h>
 #include <linux/fs.h>
 #include <linux/printk.h>
@@ -52,24 +51,16 @@ int hook_vfs_read_init(void)
 	if (!vfs_read_fn)
 		goto out;
 
-	/**
-	 * arg1: the original function address which you'd like to hijack.
-	 * arg2: GET_TEMPLATE_ADDERSS() is the trampoline template address
-	 *       that your original function will be hijacked to firstly.
-	 *       Then the trampoline will jump to your hook function.
-	 * arg3: GET_CODESPACE_ADDERSS() is the new address of your original
-	 *       function, if you'd like to call it later. If you will never
-	 *       call the original function, simply leave it to be NULL.
-	 * arg4: GET_HOOK_FUNC_ADDRESS() is your hook function address, which
-	 *       is used for stack safety check when disabling the hook.
-	 */
 	/*
 	  For powerpc, function resume is not supported, currently only function
 	  replacement is supported.
 	*/
 #ifndef _ARCH_POWERPC_
-	if (hijack_target_prepare(vfs_read_fn, GET_TEMPLATE_ADDERSS(vfs_read),
-			GET_CODESPACE_ADDERSS(vfs_read), GET_HOOK_FUNC_ADDRESS(vfs_read))) {
+	/*
+	  arg1: The target function address to hook.
+	  arg2: Must be origin_function_name.
+	*/
+	if (HIJACK_TARGET_PREP_HOOK(vfs_read_fn, vfs_read)) {
 		printk(KERN_ALERT"vfs_read prepare error!\n");
 		goto out;
 	}

@@ -1,6 +1,5 @@
 #include <linux/module.h>
 #include <linux/printk.h>
-#include "hook_framework.h"
 
 MODULE_AUTHOR("Liu Tao <ltao@redhat.com>");
 MODULE_LICENSE("GPL");
@@ -11,6 +10,7 @@ extern int hook_vfs_read_init(void);
 extern void hook_fuse_open_exit(void);
 extern void hook_vfs_open_exit(void);
 extern void hook_vfs_read_exit(void);
+extern void hijack_target_disable_all(bool, char *);
 
 static int __init test_hookframe_init(void)
 {
@@ -32,7 +32,7 @@ out:
 
 static void __exit test_hookframe_exit(void)
 {
-	hijack_target_disable_all(true);
+	hijack_target_disable_all(true, module_name(THIS_MODULE));
 	printk(KERN_ALERT"unload hook framework test!\n");
 }
 

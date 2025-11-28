@@ -1,5 +1,4 @@
 #include "include/common_data.h"
-#include "hook_framework.h"
 #include <linux/fs.h>
 #include <linux/printk.h>
 
@@ -25,10 +24,9 @@ int hook_fuse_open_init(void)
 
 #ifndef _ARCH_POWERPC_
 	/*
-	* Same as hook_vfs_read(), please refer to it for code explaination.
+	* Same as hook_vfs_read().
 	*/
-	if (hijack_target_prepare(fuse_open_fn, GET_TEMPLATE_ADDERSS(fuse_open),
-		GET_CODESPACE_ADDERSS(fuse_open), GET_HOOK_FUNC_ADDRESS(fuse_open))) {
+	if (HIJACK_TARGET_PREP_HOOK(fuse_open_fn, fuse_open)) {
 		printk(KERN_ALERT"fuse_open prepare error!\n");
 		goto out;
 	}

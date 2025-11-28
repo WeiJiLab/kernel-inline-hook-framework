@@ -10,7 +10,7 @@ extern int init_hijack_operation(void);
 extern int init_write_map_page(void);
 extern int init_proc_interface(void);
 extern void remove_proc_interface(void);
-extern void hijack_target_disable_all(bool);
+extern void hijack_target_disable_all(bool, char *);
 
 static int __init hook_framework_init(void)
 {
@@ -49,7 +49,7 @@ out:
 static void __exit hook_framework_exit(void)
 {
     printk(KERN_ALERT"unload hook framework!\n");
-    hijack_target_disable_all(true);
+    hijack_target_disable_all(true, NULL);
     remove_proc_interface();
 }
 

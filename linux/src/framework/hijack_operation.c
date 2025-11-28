@@ -6,6 +6,7 @@
 #include <linux/rwsem.h>
 #include <linux/stacktrace.h>
 #include <linux/kallsyms.h>
+#include <linux/string.h>
 #include "include/common_data.h"
 
 extern int hook_write_range(void *, void *, int);
@@ -94,11 +95,12 @@ int show_all_hook_targets(struct seq_file *p, void *v)
 }
 
 int hijack_target_prepare (void *target, void *hook_dest,
-		void *hook_template_code_space, void *hook_func)
+	void *hook_template_code_space, void *hook_func, char *mod_name)
 {
     struct sym_hook *sa = NULL;
     uint32_t ptr_hash;
     int ret = 0;
+    char *name = NULL;
 
     target += HOOK_TARGET_OFFSET;
     ptr_hash = jhash_pointer(target);
@@ -134,7 +136,8 @@ int hijack_target_prepare (void *target, void *hook_dest,
 
     /*check passed, now to allocation*/
     sa = kmalloc(sizeof(*sa), GFP_KERNEL);
-    if (!sa) {
+    name = kstrdup(mod_name, GFP_KERNEL);
+    if (!sa || !name) {
         printk(KERN_ALERT"No enough memory to hijack %lx\n", (unsigned long)target);
         ret = -1;
         goto out;
@@ -145,6 +148,7 @@ int hijack_target_prepare (void *target, void *hook_dest,
     sa->hook_dest = hook_dest;
     sa->hook_template_code_space = hook_template_code_space;
     sa->hook_func = hook_func;
+    sa->mod_name = name;
     sa->template_return_addr = target
 #ifdef _ARCH_ARM64_
     + HIJACK_SIZE - 1 * INSTRUCTION_SIZE;
@@ -166,8 +170,14 @@ int hijack_target_prepare (void *target, void *hook_dest,
     down_write(&hijack_targets_hashtable_lock);
     hash_add(all_hijack_targets, &sa->node, ptr_hash);
     up_write(&hijack_targets_hashtable_lock);
+    goto out_ok;
 
 out:
+    if (sa)
+        kfree(sa);
+    if (name)
+        kfree(name);
+out_ok:
     return ret;
 }
 EXPORT_SYMBOL(hijack_target_prepare);
@@ -258,6 +268,7 @@ int hijack_target_disable(void *target, bool need_remove)
 			if (need_remove && !ret) {
 				printk(KERN_ALERT"remove hijack target %s\n", name_buf);
 				hash_del(&sa->node);
+				kfree(sa->mod_name);
 				kfree(sa);
 			}
 			goto out;
@@ -271,7 +282,7 @@ out:
 }
 EXPORT_SYMBOL(hijack_target_disable);
 
-void hijack_target_disable_all(bool need_remove)
+void hijack_target_disable_all(bool need_remove, char *mod_name)
 {
 	struct sym_hook *sa;
 	struct hlist_node *tmp;
@@ -284,6 +295,9 @@ void hijack_target_disable_all(bool need_remove)
 		retry = false;
 		down_write(&hijack_targets_hashtable_lock);
 		hash_for_each_safe(all_hijack_targets, bkt, tmp, sa, node) {
+			if (mod_name && strcmp(sa->mod_name, mod_name)) {
+				continue;
+			}
 			do_hijack_struct.dest = sa->target;
 			do_hijack_struct.source = sa->target_code;
 			do_hijack_struct.hook_func = sa->hook_func;
@@ -306,13 +320,18 @@ void hijack_target_disable_all(bool need_remove)
 			}
 			if (need_remove && !ret) {
 				hash_del(&sa->node);
+				kfree(sa->mod_name);
 				kfree(sa);		
 			}
 		}
 		up_write(&hijack_targets_hashtable_lock);
 	} while(retry && (msleep(1000), true));
 
-	printk(KERN_ALERT"all hijacked target disabled%s\n", need_remove ?" and removed":"");
+	printk(KERN_ALERT"all hijacked target disabled%s%s%s\n",
+		need_remove ?" and removed":"",
+		mod_name ? " for ":"",
+		mod_name ? mod_name:""
+	);
 	return;
 }
 EXPORT_SYMBOL(hijack_target_disable_all);
