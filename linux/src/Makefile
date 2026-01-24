@@ -1,3 +1,4 @@
+ccflags-y := $(EXTRA_DEF) -I$(PWD) -I$(PWD)/arch/$(ARCH) -fno-pic -fno-stack-protector
 obj-m += hookFrame.o
 
 hookFrame-y += framework/module.o
@@ -27,6 +28,7 @@ default:
 	@echo "x86_64	Linux, X86_64"
 	@echo "x86	Linux, X86"
 	@echo "powerpc	Linux, PPC64LE"
+	@echo "riscv	Linux, RISCV64"
 
 arm64:
 ifndef KDIR
@@ -93,8 +95,21 @@ else
 	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
 endif
 
+riscv:
+ifndef KDIR
+	@echo "Must provide KDIR!"
+	@exit 1
+endif
+ifndef vermagic
+	$(call compile,riscv,-D_ARCH_RISCV_)
+else
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
+	$(call compile,riscv,-D_ARCH_RISCV_)
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
+endif
+
 define compile
-	$(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) EXTRA_CFLAGS="$(2) -I$(PWD) -I$(PWD)/arch/$(1) -fno-pic -fno-stack-protector" -C $(KDIR) M=$(PWD) modules
+	$(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) EXTRA_DEF=$(2) -C $(KDIR) M=$(PWD) modules
 endef
 
 clean:

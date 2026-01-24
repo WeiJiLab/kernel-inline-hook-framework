@@ -165,6 +165,10 @@ int hijack_target_prepare (void *target, void *hook_dest,
 #ifdef _ARCH_POWERPC_
     + HIJACK_SIZE;
 #endif
+
+#ifdef _ARCH_RISCV_
+    + LONG_JMP_CODE_LEN - 4;
+#endif
     sa->enabled = false;
 
     down_write(&hijack_targets_hashtable_lock);

@@ -1,3 +1,4 @@
+ccflags-y := $(EXTRA_DEF) -I$(PWD)/../src -I$(PWD)/include -fno-pic -fno-stack-protector
 obj-m += hookFrameTest.o
 
 hookFrameTest-y += module.o
@@ -17,6 +18,7 @@ default:
 	@echo "x86_64	Linux, X86_64"
 	@echo "x86	Linux, X86"
 	@echo "powerpc	Linux, PPC64LE"
+	@echo "riscv	Linux, RISCV64"
 
 arm64:
 ifndef KDIR
@@ -83,7 +85,20 @@ else
 	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
 endif
 
-compile = $(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) KBUILD_MODPOST_WARN=1 KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS) EXTRA_CFLAGS="$(2) -I$(PWD)/include -fno-pic" -C $(KDIR) M=$(PWD) modules
+riscv:
+ifndef KDIR
+	@echo "Must provide KDIR!"
+	@exit 1
+endif
+ifndef vermagic
+	$(call compile,riscv,-D_ARCH_RISCV_)
+else
+	@bash prevermagic.sh $(KDIR) "$(vermagic)"
+	$(call compile,riscv,-D_ARCH_RISCV_)
+	@bash aftvermagic.sh $(KDIR) "$(vermagic)" hookFrame
+endif
+
+compile = $(MAKE) ARCH=$(1) CROSS_COMPILE=$(CROSS_COMPILE) KBUILD_MODPOST_WARN=1 KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS) EXTRA_DEF=$(2) -C $(KDIR) M=$(PWD) modules
 
 clean:
 	find ./ -regextype posix-extended -regex ".*\.(ko|o|mod.c|order|symvers|d|cmd|mod|usyms|symversions)" | xargs rm -f

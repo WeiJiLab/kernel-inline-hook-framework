@@ -2,7 +2,8 @@
 
 ## News
 
-1) Tested can work on 6.12.52-android16-6-maybe-dirty-4k kernel within
+1) RISCV64 for linux hook support
+2) Tested can work on 6.12.52-android16-6-maybe-dirty-4k kernel within
    cutterfish VM. Android physical machine not tested.
 
 ## Introduction ##
