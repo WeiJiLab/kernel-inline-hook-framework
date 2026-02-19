@@ -2,7 +2,7 @@
 
 ## News
 
-1) RISCV64 for linux hook support
+1) RISCV64 for linux/FreeBSD hook support
 2) Tested can work on 6.12.52-android16-6-maybe-dirty-4k kernel within
    cutterfish VM. Android physical machine not tested.
 
