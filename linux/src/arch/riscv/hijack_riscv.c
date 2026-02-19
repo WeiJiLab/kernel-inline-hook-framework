@@ -43,9 +43,8 @@ int fill_nop_for_target(void *fill_dest, void *target)
 		printk(KERN_ALERT"BUG! odd instruction length\n");
 		return -1;
 	}
-	for (c = actual_len - LONG_JMP_CODE_LEN; c; c = c - 2) {
-		memset(fill_dest + LONG_JMP_CODE_LEN + c, '\x00', 1);
-		memset(fill_dest + LONG_JMP_CODE_LEN + c - 1, '\x01', 1);
+	for (c = 0; c < actual_len - LONG_JMP_CODE_LEN; c += 2) {
+		*(u16 *)(fill_dest + LONG_JMP_CODE_LEN + c) = 0x0001;
 	}
 	return 0;
 }
@@ -59,9 +58,8 @@ int fill_nop_for_code_space(void *fill_dest, void *target)
 		printk(KERN_ALERT"BUG! odd instruction length\n");
 		return -1;
 	}
-	for (c = HIJACK_SIZE - actual_len; c; c = c - 2) {
-		memset(fill_dest + actual_len + c, '\x00', 1);
-		memset(fill_dest + actual_len + c - 1, '\x01', 1);		
+	for (c = 0; c < HIJACK_SIZE - actual_len; c += 2) {
+		*(u16 *)(fill_dest + actual_len + c) = 0x0001;
 	}
 	return 0;
 }

@@ -7,6 +7,9 @@
 #ifdef _arm64_
 #include "hijack_arm64.h"
 #endif
+#ifdef _riscv_
+#include "hijack_riscv.h"
+#endif
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/uio.h>
@@ -34,8 +37,8 @@ void remove_dev_interface(void);
 
 bool hook_sys_openat_init(void);
 void hook_sys_openat_exit(void);
-bool hook__fdrop_init(void);
-void hook__fdrop_exit(void);
+bool hook_dofileread_init(void);
+void hook_dofileread_exit(void);
 
 int hijack_target_prepare(void *target, void *hook_dest, void *hook_template_code_space);
 int hijack_target_enable(void *target);

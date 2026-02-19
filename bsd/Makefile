@@ -20,7 +20,7 @@ SRCS+=arch/$(ARCH)/distorm/textdefs.c
 .endif
 
 SRCS+=sample/replace_sys_open.c
-SRCS+=sample/hook_fdrop.c
+SRCS+=sample/hook_dofileread.c
 
 CFLAGS+=-I$(PWD)/framework -I$(PWD)/arch/$(ARCH) -D"_$(ARCH)_"
 .include <bsd.kmod.mk>

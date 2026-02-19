@@ -30,7 +30,7 @@ bool hook_sys_openat_init(void)
 	}
 	return 0;
 out:
-	hijack_target_disable_all(true);
+	hijack_target_disable(sys_openat_fn, true);
 	return 1;
 }
 

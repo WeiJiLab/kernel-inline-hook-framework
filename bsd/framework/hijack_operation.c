@@ -79,7 +79,15 @@ int hijack_target_prepare(void *target, void *hook_dest, void *hook_template_cod
 		goto out;
 	}
 
-	/*second, target cannot repeat*/
+	/*second, not contain unhookable instructions*/
+	if (hook_template_code_space && !check_target_can_hijack(target)) {
+		printf("%lx contains instruction which cannot hijack...\n",
+			(unsigned long)target);
+		ret = -1;
+		goto out;
+	}
+
+	/*third, target cannot repeat*/
 	rw_rlock(&sym_hook_list_lock);
 	LIST_FOREACH(sa, &sym_hook_list, node) {
 		if (target == sa->target) {
@@ -111,6 +119,10 @@ int hijack_target_prepare(void *target, void *hook_dest, void *hook_template_cod
 
 #ifdef _amd64_
 	+ LONG_JMP_CODE_LEN - 1;
+#endif
+
+#ifdef _riscv_
+	+ LONG_JMP_CODE_LEN - 4;
 #endif
 	sa->enabled = false;
 
