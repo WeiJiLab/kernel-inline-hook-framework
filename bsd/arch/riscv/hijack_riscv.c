@@ -70,7 +70,6 @@ int fill_nop_for_code_space(void *fill_dest, void *target)
 	return 0;
 }
 
-/* skip the check */
 bool check_target_can_hijack(void *target);
 bool check_target_can_hijack(void *target)
 {

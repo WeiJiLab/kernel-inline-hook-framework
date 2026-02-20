@@ -64,9 +64,57 @@ int fill_nop_for_code_space(void *fill_dest, void *target)
 	return 0;
 }
 
-/* skip the check */
+/*
+ * Fix me:
+ * Linux contains ftrace padding at the start of target, which might be
+ * over-written by auipc inst later, making the target unhijackable:
+
+   objdump vmlinux:
+	ffffffff80457c98 <vfs_read>:
+	ffffffff80457c98: 0001  nop
+	ffffffff80457c9a: 0001  nop
+	ffffffff80457c9c: 0001  nop
+	ffffffff80457c9e: 0001  nop
+
+	ffffffff80457ca0 <.LVL1079>:
+	ffffffff80457ca0: 7171  addi    sp, sp, -0xb0
+	ffffffff80457ca2: f122  sd      s0, 0xa0(sp)
+	ffffffff80457ca4: ed26  sd      s1, 0x98(sp)
+	ffffffff80457ca6: f506  sd      ra, 0xa8(sp)
+	ffffffff80457ca8: 1900  addi    s0, sp, 0xb0
+
+   hexdump memory:
+	ffbda297 → auipc   t0, 0xffbda
+	00000013 → nop
+	7171 → c.addi16sp sp, -176
+	f122 → c.sdsp  s0, 160(sp)
+	ed26 → c.sdsp  s1, 152(sp)
+
+ * Messing up this auipc doesn't really matters for the inline hook framework,
+ * so comment out the following function to let it pass at your own risk.
+ */
 bool check_target_can_hijack(void *target)
 {
+	u16 insn_prob_2;
+	u32 insn_prob_4;
+	int off = 0;
+	int inst_len;
+
+	while (off < LONG_JMP_CODE_LEN) {
+		insn_prob_2 = *(u16 *)(target + off);
+		inst_len = ((insn_prob_2 & 0x3) == 0x3 ? 4 : 2);
+		switch (inst_len) {
+			case 2:
+				// Reserve for check insn_prob_2 is hijackable.
+				break;
+			case 4:
+				insn_prob_4 = *(u32 *)(target + off);
+				if ((insn_prob_4 & 0x7f) == 0x17) // auipc
+					return false;
+				break;
+		}
+		off += inst_len;
+	}
 	return true;
 }
 
