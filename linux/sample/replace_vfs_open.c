@@ -33,7 +33,7 @@ int hook_vfs_open_init(void)
 {
 	int ret = -EFAULT;
 
-	vfs_open_fn = (void *)find_func("vfs_open");
+	vfs_open_fn = (void *)prep_callfunc("vfs_open");
 	if (!vfs_open_fn)
 		goto out;
 

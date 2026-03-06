@@ -37,7 +37,7 @@ static ssize_t hook_targets_write(struct file *file, const char __user *buf, siz
         return -EFAULT;
     }
 
-    if (!(target = find_func(string_start))) {
+    if (!(target = find_sym(string_start))) {
         return -EFAULT;
     }
 
@@ -82,6 +82,7 @@ static struct proc_ops proc_ops = {
 	.proc_write 		= hook_targets_write,
 };
 
+int init_proc_interface(void);
 int init_proc_interface(void)
 {
     if (!proc_create("hook_targets", 0600, NULL, &proc_ops))
@@ -89,6 +90,7 @@ int init_proc_interface(void)
     return 0;
 }
 
+void remove_proc_interface(void);
 void remove_proc_interface(void)
 {
     remove_proc_entry("hook_targets", NULL);

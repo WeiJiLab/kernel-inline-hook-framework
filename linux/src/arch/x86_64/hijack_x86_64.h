@@ -6,6 +6,7 @@ extern void hook_##s##_template(void);  \
 asm (  \
     ".globl hook_"#s"_template\n\t"  \
     "hook_"#s"_template:\n\t"  \
+    "endbr64\n\t" \
     "pop %rax\n\t" \
     "jmp hook_"#s"\n\t"  \
   \
@@ -48,7 +49,7 @@ asm (  \
 })
 
 #define HIJACK_SIZE 24
-#define LONG_JMP_CODE_LEN 14
+#define LONG_JMP_CODE_LEN 18
 int fill_nop_for_target(void *, void *);
 int fill_nop_for_code_space(void *, void *);
 int init_arch(void);

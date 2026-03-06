@@ -90,7 +90,8 @@ int hijack_target_prepare(void *target, void *hook_dest,
 int hijack_target_enable(void *target);
 int hijack_target_disable(void *target, bool need_remove);
 void hijack_target_disable_all(bool need_remove, char *mod_name);
-void *find_func(const char *name);
+void *find_sym(const char *name);
+void *prep_callfunc(const char *name);
 
 #define HIJACK_TARGET_PREP_HOOK(addr, fn) \
 	hijack_target_prepare(addr, GET_TEMPLATE_ADDERSS(fn), \

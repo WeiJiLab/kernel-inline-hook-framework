@@ -47,7 +47,7 @@ int hook_vfs_read_init(void)
 {
 	int ret = -EFAULT;
 
-	vfs_read_fn = (void *)find_func("vfs_read");
+	vfs_read_fn = (void *)prep_callfunc("vfs_read");
 	if (!vfs_read_fn)
 		goto out;
 

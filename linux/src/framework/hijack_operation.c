@@ -45,6 +45,7 @@ struct do_hijack_struct {
  * -1: stack within hook_func area(can write hook, retry later)
  *  0: success(can release memory immediately)
 */
+__nocfi int do_hijack_target(void *data);
 __nocfi int do_hijack_target(void *data)
 {
 	void *dest = ((struct do_hijack_struct *)data)->dest;
@@ -66,6 +67,7 @@ out:
 	return ret;
 }
 
+__nocfi bool check_function_length_enough(void *target);
 __nocfi bool check_function_length_enough(void *target)
 {
     unsigned long symbolsize, offset;
@@ -78,6 +80,7 @@ __nocfi bool check_function_length_enough(void *target)
     }
 }
 
+int show_all_hook_targets(struct seq_file *p, void *v);
 int show_all_hook_targets(struct seq_file *p, void *v)
 {
     int bkt;
@@ -159,7 +162,7 @@ int hijack_target_prepare (void *target, void *hook_dest,
 #endif
 
 #if defined(_ARCH_X86_64_) || defined(_ARCH_X86_)
-    + LONG_JMP_CODE_LEN - 1;
+    + LONG_JMP_CODE_LEN - 5;
 #endif
 
 #ifdef _ARCH_POWERPC_
@@ -342,9 +345,10 @@ EXPORT_SYMBOL(hijack_target_disable_all);
 
 /************************************************************************************/
 
+int init_hijack_operation(void);
 int init_hijack_operation(void)
 {
-    kallsyms_lookup_size_offset_ptr = find_func("kallsyms_lookup_size_offset");
+    kallsyms_lookup_size_offset_ptr = prep_callfunc("kallsyms_lookup_size_offset");
     if (kallsyms_lookup_size_offset_ptr) {
         return 0;
     } else {

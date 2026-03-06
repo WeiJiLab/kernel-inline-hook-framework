@@ -18,7 +18,7 @@ int hook_fuse_open_init(void)
 {
 	int ret = -EFAULT;
 
-	fuse_open_fn = (void *)find_func("fuse_open");
+	fuse_open_fn = (void *)prep_callfunc("fuse_open");
 	if (!fuse_open_fn)
 		goto out;
 

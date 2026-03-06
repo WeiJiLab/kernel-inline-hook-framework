@@ -46,6 +46,7 @@ out:
 /*
 * referenced from https://github.com/dynup/kpatch/blob/master/kmod/core/core.c
 */
+__nocfi int stack_activeness_safety_check(unsigned long addr, unsigned long hook_func);
 __nocfi int stack_activeness_safety_check(unsigned long addr, unsigned long hook_func)
 {
 	struct task_struct *g, *t;
@@ -73,9 +74,10 @@ out:
 	return ret;
 }
 
+void init_stack_safety_check(void);
 void init_stack_safety_check(void)
 {
-	stack_trace_save_tsk_ptr = find_func("stack_trace_save_tsk");
+	stack_trace_save_tsk_ptr = prep_callfunc("stack_trace_save_tsk");
 	if (!stack_trace_save_tsk_ptr) {
 		printk(KERN_ALERT"Your kernel should be CONFIG_STACKTRACE,"
 			" skip stack safety check and use as your risk!!!\n");

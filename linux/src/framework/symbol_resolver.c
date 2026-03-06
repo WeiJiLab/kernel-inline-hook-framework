@@ -67,6 +67,8 @@ struct kernel_symbol {
 };
 #endif
 
+int hack_func_ibt(void *func, int *offset);
+
 /******************************************************************************/
 
 static const struct kernel_symbol *(*resolve_symbol_ptr)(struct module *,
@@ -76,7 +78,7 @@ static const struct kernel_symbol *(*resolve_symbol_ptr)(struct module *,
 static struct wait_queue_head *module_wq_ptr = NULL;
 static unsigned long (*kallsyms_lookup_name_ptr)(const char *) = NULL;
 
-__nocfi void *find_func(const char *name)
+__nocfi void *find_sym(const char *name)
 {
 	void *ret = NULL;
 	ret = (void *)kallsyms_lookup_name_ptr(name);
@@ -85,7 +87,19 @@ __nocfi void *find_func(const char *name)
 	}
 	return ret;
 }
-EXPORT_SYMBOL(find_func);
+EXPORT_SYMBOL(find_sym);
+
+__nocfi void *prep_callfunc(const char *name)
+{
+	void *ret = NULL;
+	int offset = 0;
+	if ((ret = find_sym(name)) != NULL) {
+		if (!hack_func_ibt(ret, &offset))
+			ret += offset;
+	}
+	return ret;
+}
+EXPORT_SYMBOL(prep_callfunc);
 
 /******************************************************************************/
 
@@ -140,6 +154,7 @@ static bool ignore_undef_symbol(Elf_Half emachine, const char *name)
 	return false;
 }
 
+__nocfi int hook_simplify_symbols(struct module *mod, const struct load_info *info);
 __nocfi int hook_simplify_symbols(struct module *mod, const struct load_info *info)
 {
 	Elf_Shdr *symsec = &info->sechdrs[info->index.sym];
@@ -195,7 +210,7 @@ __nocfi int hook_simplify_symbols(struct module *mod, const struct load_info *in
 			ret = PTR_ERR(ksym) ?: -ENOENT;
 
 			if (ret) {
-				sym[i].st_value = (Elf_Addr)find_func(name);
+				sym[i].st_value = (Elf_Addr)find_sym(name);
 				if (sym[i].st_value) {
 					ret = 0;
 					break;
@@ -223,9 +238,11 @@ HOOK_FUNC_TEMPLATE(simplify_symbols);
 
 /******************************************************************************/
 
+int init_kallsyms_lookup_func(void);
 int init_kallsyms_lookup_func(void)
 {
 	int ret;
+	int offset = 0;
 
 	// First, we get kallsyms_lookup_name()
 	struct kprobe kp = {
@@ -238,19 +255,22 @@ int init_kallsyms_lookup_func(void)
 		goto out;
 	}
 	kallsyms_lookup_name_ptr = (void *)(kp.addr) - HOOK_TARGET_OFFSET;
+	hack_func_ibt(kallsyms_lookup_name_ptr, &offset);
+	kallsyms_lookup_name_ptr += offset;
 	unregister_kprobe(&kp);
 	ret = 0;
 out:
 	return ret;
 }
 
+int init_simplify_symbols_hook(void);
 int init_simplify_symbols_hook(void)
 {
 	void *simplify_symbols_ptr;
 
-	resolve_symbol_ptr = find_func("resolve_symbol");
-	simplify_symbols_ptr = find_func("simplify_symbols");
-	module_wq_ptr = find_func("module_wq");
+	resolve_symbol_ptr = prep_callfunc("resolve_symbol");
+	simplify_symbols_ptr = find_sym("simplify_symbols");
+	module_wq_ptr = prep_callfunc("module_wq");
 
 	if (!resolve_symbol_ptr || !simplify_symbols_ptr ||
 	    !module_wq_ptr)

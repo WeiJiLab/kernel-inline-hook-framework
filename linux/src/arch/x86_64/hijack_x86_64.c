@@ -5,9 +5,10 @@
 	push 	%rax
 	movabs 	$addr, %rax
 	jmp 	*%rax
+	endbr64
 	pop 	%rax
 */
-const char long_jmp_code[14]="\x50\x48\xb8\x00\x00\x00\x00\x00\x00\x00\x00\xff\xe0\x58";
+const char long_jmp_code[18]="\x50\x48\xb8\x00\x00\x00\x00\x00\x00\x00\x00\xff\xe0\xf3\x0f\x1e\xfa\x58";
 
 inline void fill_long_jmp(void *fill_dest, void *hijack_to_func)
 {
