@@ -102,7 +102,7 @@ int hijack_target_prepare (void *target, void *hook_dest,
     int ret = 0;
     char *name = NULL;
 
-    target += HOOK_TARGET_OFFSET;
+    target += HOOK_TARGET_OFFSET(target);
     ptr_hash = jhash_pointer(target);
     sprint_symbol_no_offset(name_buf, (unsigned long)target);
 
@@ -200,7 +200,7 @@ int hijack_target_enable(void *target)
     unsigned char source_code[HIJACK_SIZE] = {0};
     struct do_hijack_struct do_hijack_struct;
     
-    target += HOOK_TARGET_OFFSET;
+    target += HOOK_TARGET_OFFSET(target);
     ptr_hash = jhash_pointer(target);
     do_hijack_struct = (struct do_hijack_struct ) {
         .dest = target,
@@ -248,7 +248,7 @@ int hijack_target_disable(void *target, bool need_remove)
 	int ret = -1;
 	struct do_hijack_struct do_hijack_struct;
 
-	target += HOOK_TARGET_OFFSET;
+	target += HOOK_TARGET_OFFSET(target);
 	ptr_hash = jhash_pointer(target);
 	do_hijack_struct = (struct do_hijack_struct) {
 		.dest = target

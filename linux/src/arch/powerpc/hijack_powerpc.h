@@ -1,14 +1,18 @@
 #ifndef _HOOK_POWERPC_H_
 #define _HOOK_POWERPC_H_
 
+#include <asm/asm-offsets.h>
+#include <linux/stringify.h>
+
 #define HOOK_FUNC_TEMPLATE(s)			\
 extern void hook_##s##_template(void);		\
 asm (						\
 	".section \".data\"			\n\t" \
+	".balign 8				\n\t" \
 	#s"_r2:					\n\t" \
-	".quad 0				\n\t" \
+	".zero 512				\n\t" \
 	#s"_lr:					\n\t" \
-	".quad 0				\n\t" \
+	".zero 512				\n\t" \
 						\
 	".section \".text\"			\n\t" \
 	".quad .TOC.-hook_"#s"_template		\n\t" \
@@ -18,18 +22,23 @@ asm (						\
 	"ld	2, -8(12)			\n\t" \
 	"add	2, 2, 12			\n\t" \
 						\
+	"lhz	11, "__stringify(PACAPACAINDEX)"(13)\n\t" \
+	"sldi	11, 11, 3			\n\t" \
+						\
 	"addis	12, 2, "#s"_r2@toc@ha		\n\t" \
 	"addi	12, 12, "#s"_r2@toc@l		\n\t" \
+	"add	12, 12, 11			\n\t" \
 	"std	0, 0(12)			\n\t" \
 						\
 	"mflr	0				\n\t" \
 	"addis	12, 2, "#s"_lr@toc@ha		\n\t" \
 	"addi	12, 12, "#s"_lr@toc@l		\n\t" \
+	"add	12, 12, 11			\n\t" \
 	"std	0, 0(12)			\n\t" \
 						\
 	"addis	12, 2, hook_"#s"_template@toc@ha\n\t" \
 	"addi	12, 12, hook_"#s"_template@toc@l\n\t" \
-	"addi	12, 12, 72			\n\t" \
+	"addi	12, 12, 88			\n\t" \
 	"mtlr	12				\n\t" \
 						\
 	"addis	12, 2, hook_"#s"@toc@ha		\n\t" \
@@ -37,11 +46,16 @@ asm (						\
 	"mtctr	12				\n\t" \
 	"bctr					\n\t" \
 						\
+	"lhz	11, "__stringify(PACAPACAINDEX)"(13)\n\t" \
+	"sldi	11, 11, 3			\n\t" \
+						\
 	"addis	12, 2, "#s"_r2@toc@ha		\n\t" \
 	"addi	12, 12, "#s"_r2@toc@l		\n\t" \
+	"add	12, 12, 11			\n\t" \
 	"ld	0, 0(12)			\n\t" \
 	"addis	12, 2, "#s"_lr@toc@ha		\n\t" \
 	"addi	12, 12, "#s"_lr@toc@l		\n\t" \
+	"add	12, 12, 11			\n\t" \
 	"mr	2, 0				\n\t" \
 	"ld	0, 0(12)			\n\t" \
 	"mtlr	0				\n\t" \
@@ -58,11 +72,7 @@ asm (						\
 	".long 	0\n\t"				\
 	".long 	0\n\t"				\
 	".long 	0\n\t"				\
-	".long 	0\n\t"				\
-	".long 	0\n\t"				\
 	/********** */				\
-	".long	0\n\t"				\
-	".long	0\n\t"				\
 	".long	0\n\t"				\
 	".long	0\n\t"				\
 	".long	0\n\t"				\
@@ -108,11 +118,17 @@ asm (						\
 })
 
 #define INSTRUCTION_SIZE 4
-#define HIJACK_INST_NUM 11
+#define HIJACK_INST_NUM 9
 #define HIJACK_SIZE (INSTRUCTION_SIZE * HIJACK_INST_NUM)
 #define fill_nop_for_target(x, y) (0)
 #define fill_nop_for_code_space(x, y) (0)
-#define HOOK_TARGET_OFFSET (0)
+
+#define HOOK_TARGET_OFFSET(target) \
+({ \
+	ppc_function_local(target) - target; \
+})
+
 #define CODE_SPACE_OFFSET (0)
 int init_arch(void);
+void *ppc_function_local(void *func);
 #endif

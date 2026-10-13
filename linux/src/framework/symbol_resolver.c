@@ -81,11 +81,21 @@ __nocfi void __weak *find_func(const char *name)
 	void *ret = NULL;
 	ret = (void *)kallsyms_lookup_name_ptr(name);
 	if (!ret) {
-		printk(KERN_ALERT"Symbol %s not found!\n", name);
+		printk(KERN_ALERT"Function %s not found!\n", name);
 	}
 	return ret;
 }
 EXPORT_SYMBOL(find_func);
+
+void *find_syml(const char *name)
+{
+	void *ret = NULL;
+	ret = (void *)kallsyms_lookup_name_ptr(name);
+	if (!ret) {
+		printk(KERN_ALERT"Symbol %s not found!\n", name);
+	}
+	return ret;
+}
 
 /******************************************************************************/
 
@@ -195,7 +205,7 @@ __nocfi int hook_simplify_symbols(struct module *mod, const struct load_info *in
 			ret = PTR_ERR(ksym) ?: -ENOENT;
 
 			if (ret) {
-				sym[i].st_value = (Elf_Addr)find_func(name);
+				sym[i].st_value = (Elf_Addr)find_syml(name);
 				if (sym[i].st_value) {
 					ret = 0;
 					break;
@@ -237,7 +247,7 @@ int init_kallsyms_lookup_func(void)
 		printk(KERN_ALERT"register_kprobe failed!\n");
 		goto out;
 	}
-	kallsyms_lookup_name_ptr = (void *)(kp.addr) - HOOK_TARGET_OFFSET;
+	kallsyms_lookup_name_ptr = (void *)(kp.addr) - HOOK_TARGET_OFFSET((void *)(kp.addr));
 	unregister_kprobe(&kp);
 	ret = 0;
 out:
@@ -250,7 +260,7 @@ int init_simplify_symbols_hook(void)
 
 	resolve_symbol_ptr = find_func("resolve_symbol");
 	simplify_symbols_ptr = find_func("simplify_symbols");
-	module_wq_ptr = find_func("module_wq");
+	module_wq_ptr = find_syml("module_wq");
 
 	if (!resolve_symbol_ptr || !simplify_symbols_ptr ||
 	    !module_wq_ptr)

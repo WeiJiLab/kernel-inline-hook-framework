@@ -19,7 +19,7 @@ const char long_jmp_code[36]=
 	"\xa6\x02\x08\x7c\x05\x00\x9f\x42\xa6\x02\x88\x7d\x14\x00\x8c\xe9\xa6\x03\x89\x7d\xa6\x03\x08\x7c\x20\x04\x80\x4e\x00\x00\x00\x00\x00\x00\x00\x00";
 
 /* Only support CONFIG_PPC64_ELF_ABI_V2 */
-static void *ppc_function_local(void *func)
+void *ppc_function_local(void *func)
 {
 	void *ret;
 	u32 *insn = func;
@@ -37,21 +37,26 @@ static void *ppc_function_local(void *func)
 
 inline void fill_long_jmp(void *fill_dest, void *hijack_to_func)
 {
-	fill_dest = ppc_function_local(fill_dest);
 	memcpy(fill_dest, long_jmp_code, sizeof(long_jmp_code));
 	memcpy(fill_dest + 7 * INSTRUCTION_SIZE, &hijack_to_func, sizeof(void *));
 }
 
+bool (*is_conditional_branch_ptr)(ppc_inst_t) = NULL;
+
 bool check_instruction_can_hijack(uint32_t instruction)
 {
 	bool ret = true;
+
+	if (is_conditional_branch_ptr(ppc_inst(instruction)))
+		ret = false;
+
 	return ret;
 }
 
 bool check_target_can_hijack(void *target)
 {
 	int offset = 0;
-	for (; offset < HOOK_TARGET_OFFSET + HIJACK_SIZE; offset += INSTRUCTION_SIZE) {
+	for (; offset < HOOK_TARGET_OFFSET(target) + HIJACK_SIZE; offset += INSTRUCTION_SIZE) {
 		if (!check_instruction_can_hijack(*(uint32_t *)(target + offset)))
 			return false;
 	}
@@ -87,7 +92,7 @@ void *find_func(const char *name)
 		kallsyms_lookup_name_ptr -= 2 * sizeof(u32);
 	ret = (void *)kallsyms_lookup_name_ptr(name);
 	if (!ret) {
-		printk(KERN_ALERT"Symbol %s not found!\n", name);
+		printk(KERN_ALERT"Func %s not found!\n", name);
 		goto out;
 	}
 
@@ -100,5 +105,9 @@ out:
 int init_arch(void)
 {
 	patch_instruction_ptr = (void *)find_func("patch_instruction");
-	return !patch_instruction_ptr;
+	is_conditional_branch_ptr = (void *)find_func("is_conditional_branch");
+	if (patch_instruction_ptr && is_conditional_branch_ptr)
+		return 0;
+	else
+		return 1;
 }
