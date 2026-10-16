@@ -31,6 +31,8 @@ asm (  \
     codespace;  \
 })
 
+#define RESUME_FUNC_ADDERSS(s) GET_CODESPACE_ADDERSS(s)
+
 #define GET_HOOK_FUNC_ADDRESS(s) \
 ({  \
     void *hook_func; \
@@ -43,7 +45,6 @@ asm (  \
 #define HIJACK_SIZE (INSTRUCTION_SIZE * HIJACK_INST_NUM)
 #define fill_nop_for_target(x, y) (0)
 #define fill_nop_for_code_space(x, y) (0)
-#define HOOK_TARGET_OFFSET(x) (0)
-#define CODE_SPACE_OFFSET (0)
+#define LOCAL_FUNC_OFFSET(x) (0)
 int init_arch(void);
 #endif

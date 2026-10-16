@@ -7,6 +7,10 @@
 #define HOOK_FUNC_TEMPLATE(s)			\
 extern void hook_##s##_template(void);		\
 asm (						\
+	".section \".rodata\"			\n\t" \
+	#s"_name:				\n\t" \
+        ".asciz  \""#s"\"			\n\t" \
+						\
 	".section \".data\"			\n\t" \
 	".balign 8				\n\t" \
 	#s"_r2:					\n\t" \
@@ -61,6 +65,20 @@ asm (						\
 	"mtlr	0				\n\t" \
 	"blr					\n\t" \
 						\
+	"mflr	0				\n\t" \
+	"stdu	1, -72(1)			\n\t" \
+	"std	0, 40(1)			\n\t" \
+	"std	3, 48(1)			\n\t" \
+	"addis	3, 2, "#s"_name@toc@ha		\n\t" \
+	"addi	3, 3, "#s"_name@toc@l		\n\t" \
+	"bl	find_func			\n\t" \
+	"nop					\n\t" \
+	"mr	12, 3				\n\t" \
+	"ld	3, 48(1)			\n\t" \
+	"ld	0, 40(1)			\n\t" \
+	"mtlr	0				\n\t" \
+	"addi	1, 1, 72			\n\t" \
+						\
 	".globl "#s"_code_space\n\t"		\
 	#s"_code_space:\n\t"			\
 	".long	0\n\t"				\
@@ -72,7 +90,11 @@ asm (						\
 	".long 	0\n\t"				\
 	".long 	0\n\t"				\
 	".long 	0\n\t"				\
+	".long 	0\n\t"				\
+	".long 	0\n\t"				\
 	/********** */				\
+	".long	0\n\t"				\
+	".long	0\n\t"				\
 	".long	0\n\t"				\
 	".long	0\n\t"				\
 	".long	0\n\t"				\
@@ -103,8 +125,12 @@ asm (						\
 		"addi %0,%0,"#s"_code_space@toc@l\n\t":		\
 		"=r"(codespace)					\
 	);							\
-	codespace;					 	\
+	codespace;						\
 })
+
+/* 13 instructions above xx_code_space */
+#define RESUME_FUNC_ADDERSS(s) 					\
+(GET_CODESPACE_ADDERSS(s) - 13 * INSTRUCTION_SIZE)
 
 #define GET_HOOK_FUNC_ADDRESS(s)				\
 ({								\
@@ -118,17 +144,16 @@ asm (						\
 })
 
 #define INSTRUCTION_SIZE 4
-#define HIJACK_INST_NUM 9
+#define HIJACK_INST_NUM 11
 #define HIJACK_SIZE (INSTRUCTION_SIZE * HIJACK_INST_NUM)
 #define fill_nop_for_target(x, y) (0)
 #define fill_nop_for_code_space(x, y) (0)
 
-#define HOOK_TARGET_OFFSET(target) \
+#define LOCAL_FUNC_OFFSET(target) \
 ({ \
 	ppc_function_local(target) - target; \
 })
 
-#define CODE_SPACE_OFFSET (0)
 int init_arch(void);
 void *ppc_function_local(void *func);
 #endif

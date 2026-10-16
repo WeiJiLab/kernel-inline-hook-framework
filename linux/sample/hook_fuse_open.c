@@ -8,7 +8,7 @@ __nocfi int hook_fuse_open(struct inode *inode, struct file *file)
 	char *origin_fuse_open;
 
 	printk(KERN_ALERT"in hooked fuse_open\n");
-	origin_fuse_open = GET_CODESPACE_ADDERSS(fuse_open);
+	origin_fuse_open = RESUME_FUNC_ADDERSS(fuse_open);
 	return ((int (*)(struct inode *, struct file *))origin_fuse_open)(inode, file);
 }
 

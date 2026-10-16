@@ -18,6 +18,8 @@
 const char long_jmp_code[36]=
 	"\xa6\x02\x08\x7c\x05\x00\x9f\x42\xa6\x02\x88\x7d\x14\x00\x8c\xe9\xa6\x03\x89\x7d\xa6\x03\x08\x7c\x20\x04\x80\x4e\x00\x00\x00\x00\x00\x00\x00\x00";
 
+const char nop_code[4]="\x00\x00\x00\x60";
+
 /* Only support CONFIG_PPC64_ELF_ABI_V2 */
 void *ppc_function_local(void *func)
 {
@@ -37,8 +39,16 @@ void *ppc_function_local(void *func)
 
 inline void fill_long_jmp(void *fill_dest, void *hijack_to_func)
 {
-	memcpy(fill_dest, long_jmp_code, sizeof(long_jmp_code));
-	memcpy(fill_dest + 7 * INSTRUCTION_SIZE, &hijack_to_func, sizeof(void *));
+	if (ppc_function_local(fill_dest) != fill_dest) {
+		memcpy(fill_dest + 2 * INSTRUCTION_SIZE, long_jmp_code, sizeof(long_jmp_code));
+		memcpy(fill_dest + (2 + 7) * INSTRUCTION_SIZE, &hijack_to_func, sizeof(void *));
+	} else {
+		memcpy(fill_dest, long_jmp_code, sizeof(long_jmp_code));
+		memcpy(fill_dest + 7 * INSTRUCTION_SIZE, &hijack_to_func, sizeof(void *));
+		for (int i = 0; i < 2; i++)
+			memcpy(fill_dest + sizeof(long_jmp_code) + i * INSTRUCTION_SIZE,
+				nop_code, INSTRUCTION_SIZE);
+	}
 }
 
 bool (*is_conditional_branch_ptr)(ppc_inst_t) = NULL;
@@ -56,7 +66,7 @@ bool check_instruction_can_hijack(uint32_t instruction)
 bool check_target_can_hijack(void *target)
 {
 	int offset = 0;
-	for (; offset < HOOK_TARGET_OFFSET(target) + HIJACK_SIZE; offset += INSTRUCTION_SIZE) {
+	for (; offset < HIJACK_SIZE; offset += INSTRUCTION_SIZE) {
 		if (!check_instruction_can_hijack(*(uint32_t *)(target + offset)))
 			return false;
 	}

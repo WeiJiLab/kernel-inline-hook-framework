@@ -18,10 +18,10 @@ __nocfi ssize_t hook_vfs_read(struct file *file, char __user *buf, size_t count,
 
 	/*
 	* To resume the original function, get the original function address
-	* by GET_CODESPACE_ADDERSS(), which must pass the origin_function_name
+	* by RESUME_FUNC_ADDERSS(), which must pass the origin_function_name
 	* to it.
 	*/
-	char *origin_vfs_read = GET_CODESPACE_ADDERSS(vfs_read);
+	char *origin_vfs_read = RESUME_FUNC_ADDERSS(vfs_read);
 
 	path_buffer = kmalloc(512, GFP_KERNEL);
 	if (!path_buffer)
@@ -31,6 +31,7 @@ __nocfi ssize_t hook_vfs_read(struct file *file, char __user *buf, size_t count,
 	if (!IS_ERR(result)) {
 		if (!strnstr(result, "/dev/kmsg", 512 - (result - path_buffer)) && 
 		    !strnstr(result, "[timerfd]", 512 - (result - path_buffer)) &&
+		    !strnstr(result, "anon_inode", 512 - (result - path_buffer)) &&
 		    !strnstr(result, "/proc/kmsg", 512 - (result - path_buffer)) &&
 		    !strnstr(result, "/run/log", 512 - (result - path_buffer)) &&
 		    !strnstr(result, "/var/log", 512 - (result - path_buffer)))
@@ -52,11 +53,6 @@ int hook_vfs_read_init(void)
 		goto out;
 
 	/*
-	  For powerpc, function resume is not supported, currently only function
-	  replacement is supported.
-	*/
-#ifndef _ARCH_POWERPC_
-	/*
 	  arg1: The target function address to hook.
 	  arg2: Must be origin_function_name.
 	*/
@@ -68,7 +64,7 @@ int hook_vfs_read_init(void)
 		printk(KERN_ALERT"vfs_read enable error!\n");
 		goto out;
 	}
-#endif
+
 	return 0;
 
 out:

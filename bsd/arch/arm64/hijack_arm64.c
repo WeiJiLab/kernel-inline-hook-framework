@@ -79,7 +79,7 @@ out:
 bool check_target_can_hijack(void *target)
 {
 	int offset = 0;
-	for (; offset < HOOK_TARGET_OFFSET + HIJACK_SIZE; offset += INSTRUCTION_SIZE) {
+	for (; offset < HIJACK_SIZE; offset += INSTRUCTION_SIZE) {
 		if (!check_instruction_can_hijack(*(uint32_t *)((char *)target + offset)))
 			return false;
 	}
